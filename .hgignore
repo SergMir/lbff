@@ -1,0 +1,3 @@
+glob:.obj/
+glob:user.mk
+glob:lbff.exe
