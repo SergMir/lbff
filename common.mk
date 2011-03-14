@@ -17,7 +17,7 @@ CFLAGS     = -Wall
 CXXFLAGS   = -O2
 CMAKEFLAGS = -I$(ROOT)/$(INCLUDE_PATH) -L$(ROOT)/$(INCLUDE_PATH) -L/lib -Wall
 
-ifeq ($(UNAME), Linux)
+ifeq ($(UNAME), GNU/Linux)
   CMAKELIBS = -lGL -lGLU -lglut
 else ifeq ($(UNAME), Cygwin)
   CMAKELIBS = -lopengl32 -lglu32 -lglut32
