@@ -15,7 +15,7 @@ CC         = gcc
 CXX        = g++
 CFLAGS     = -Wall
 CXXFLAGS   = -O2
-CMAKEFLAGS = -I$(ROOT)/$(INCLUDE_PATH) -L$(ROOT)/$(INCLUDE_PATH) -L/lib -Wall
+CMAKEFLAGS = -I$(ROOT)/$(INCLUDE_PATH) -L$(ROOT)/$(INCLUDE_PATH) -L/lib -Wall -I$(OPENCL_PATH)/include
 
 ifeq ($(UNAME), GNU/Linux)
   CMAKELIBS = -lGL -lGLU -lglut
