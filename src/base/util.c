@@ -85,7 +85,7 @@ LB_Lattice_t* LB_CreateLattice(LB_lattice_type_t lattice_type,
                                uint countX, uint countY, uint countZ,
                                double sizeX, double sizeY, double sizeZ)
 {
-  LB_Lattice_t *lattice = malloc(sizeof(LB_Lattice_t));
+  LB_Lattice_t *lattice = (LB_Lattice_t *)malloc(sizeof(LB_Lattice_t));
   int i = 0, nodes_num = countX * countY * countZ;
   double *ch_vector;
 
@@ -100,8 +100,8 @@ LB_Lattice_t* LB_CreateLattice(LB_lattice_type_t lattice_type,
   lattice->sizeY = sizeY;
   lattice->sizeZ = sizeZ;
 
-  lattice->nodes   = malloc(sizeof(LB_Node_t) * nodes_num);
-  lattice->vectors = malloc(sizeof(double) * nodes_num * node_type);
+  lattice->nodes   = (LB_Node_t*)malloc(sizeof(LB_Node_t) * nodes_num);
+  lattice->vectors = (double *)malloc(sizeof(double) * nodes_num * node_type);
 
   for (i = 0, ch_vector = lattice->vectors; i < nodes_num; ++i)
   {

@@ -65,7 +65,7 @@ int EXTOBJ_ForceCalcSimple(void *_obj, EXTOBJ_force_t *input_forces, uint in_for
  */
 EXTOBJ_obj_p EXTOBJ_CreateObject(EXTOBJ_obj_type_t type)
 {
-  EXTOBJ_obj_p obj = malloc(sizeof(EXTOBJ_obj_t));
+  EXTOBJ_obj_p obj = (EXTOBJ_obj_p)malloc(sizeof(EXTOBJ_obj_t));
 
   switch (type)
   {
@@ -73,7 +73,7 @@ EXTOBJ_obj_p EXTOBJ_CreateObject(EXTOBJ_obj_type_t type)
   {
     double points[4][3] = {{10, 10, 0}, {30, 10, 0}, {30, 30, 0}, {10, 30, 0}};
     size_t size = sizeof(double) * 3 * 4;
-    obj->points = malloc(size);
+    obj->points = (double*)malloc(size);
     memcpy(obj->points, points, size);
 
     obj->recalculate_force = EXTOBJ_ForceCalcSimple;
