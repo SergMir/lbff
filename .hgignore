@@ -1,3 +1,4 @@
 glob:.obj/
 glob:user.mk
 glob:lbff.exe
+glob:nbproject/
