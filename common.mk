@@ -3,7 +3,15 @@ VERBOSE_COMPILE     := y
 OPENCL_INCLUDE_PATH :=
 OPENCL_LIBS_PATH    :=
 
-UNAME := $(shell uname -o)
+UNAME :=  $(shell uname -o)
+
+ifeq ($(X32_64), 32)
+  SUFFIX64=
+else ifeq ($(X32_64), 64)
+  SUFFIX64=_64
+else
+  $(error "Unknown arch: $(X32_64)")
+endif
 
 ifeq ($(VERBOSE_COMPILE), y)
   ECHO =
@@ -15,7 +23,8 @@ CC         = gcc
 CXX        = g++
 CFLAGS     = -Wall
 CXXFLAGS   = -O2
-CMAKEFLAGS = -I$(ROOT)/$(INCLUDE_PATH) -L/lib -Wall -I$(OPENCL_PATH)/include
+CMAKEFLAGS = -I$(ROOT)/$(INCLUDE_PATH) -I$(OPENCL_PATH)/include -Wall
+CLIBSPATHS = -L/lib -L$(OPENCL_PATH)/lib/x86$(SUFFIX64)
 
 ifeq ($(UNAME), GNU/Linux)
   CMAKELIBS = -lGL -lGLU -lglut -lOpenCL
