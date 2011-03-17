@@ -12,9 +12,10 @@ all: .obj subdirs
 .obj:
 	mkdir .obj
 
-subdirs:
-	$(ECHO) set -e; for d in $(SRC_SUBDIRS); do make -C $(SOURCES_PATH)/$$d ; done
+subdirs: $(SRC_SUBDIRS)
 
+$(SRC_SUBDIRS):
+	$(MAKE) -C $(ROOT)/$(SOURCES_PATH)/$@
 
 clean:
 	$(ECHO) rm -rf $(OBJECTS_PATH)
