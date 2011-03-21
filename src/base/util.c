@@ -49,9 +49,9 @@ void BASE_ForcesSwitch(int on)
 /*
  * Get xyz indexes of node in lattice by it's index
  */
-void BASE_GetPosByIdx(LB_Lattice_p lattice, int index, int *x, int *y, int *z)
+void BASE_GetPosByIdx(LB_Lattice_p lattice, int index, uint *x, uint *y, uint *z)
 {
-  int xy = lattice->countX * lattice->countY;
+  uint xy = lattice->countX * lattice->countY;
 
   *z = index / xy;
   index -= *z * xy;
@@ -105,7 +105,7 @@ LB_Lattice_t* LB_CreateLattice(LB_lattice_type_t lattice_type,
 
   for (i = 0, ch_vector = lattice->vectors; i < nodes_num; ++i)
   {
-    int j = 0;
+    uint j = 0;
 
     lattice->nodes[i].density = 1.0;
     for (; j < node_type; ++j)

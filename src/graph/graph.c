@@ -60,7 +60,7 @@ int GRAPH_Init(f_mainloop_t mainloop)
  */
 void GRAPH_Redraw(LB_Lattice_p lattice, EXTOBJ_obj_p objects, uint objcnt)
 {
-  int i, nodes_cnt = lattice->countX * lattice->countY * lattice->countZ;
+  uint i, nodes_cnt = lattice->countX * lattice->countY * lattice->countZ;
   double *ch_vector = lattice->vectors;
 
   glClear(GL_COLOR_BUFFER_BIT);
@@ -74,17 +74,16 @@ void GRAPH_Redraw(LB_Lattice_p lattice, EXTOBJ_obj_p objects, uint objcnt)
   for (i = 0; i < nodes_cnt; ++i)
   {
     double x, y, z;
-    double rel_velocity;
-    int xpos, ypos, zpos;
+    double rel_velocity, v_sum = 0;
+    uint xpos, ypos, zpos, j;
+    float red, blue;
+    
     BASE_GetPosByIdx(lattice, i, &xpos, &ypos, &zpos);
+    
 
     x = xpos * lattice->sizeX / lattice->countX;
     y = ypos * lattice->sizeY / lattice->countY;
     z = zpos * lattice->sizeZ / lattice->countZ;
-
-    int j;
-    double v_sum = 0;
-    float red, blue;
 
     for (j = 0; j < lattice->node_type; ++j)
     {

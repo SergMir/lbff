@@ -8,7 +8,7 @@
 void BASE_Stop();
 void BASE_MoveObjects(double dx, double dy, double dz);
 void BASE_ForcesSwitch(int on);
-void BASE_GetPosByIdx(LB_Lattice_p lattice, int index, int *x, int *y, int *z);
+void BASE_GetPosByIdx(LB_Lattice_p lattice, int index, uint *x, uint *y, uint *z);
 LB_Lattice_t* LB_CreateLattice(LB_lattice_type_t lattice_type, LB_node_type_t node_type,
                                uint countX, uint countY, uint countZ,
                                double sizeX, double sizeY, double sizeZ);

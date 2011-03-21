@@ -23,7 +23,7 @@ CC         = gcc
 CXX        = g++
 CFLAGS     = -Wall
 CXXFLAGS   = -O2
-CMAKEFLAGS = -I$(ROOT)/$(INCLUDE_PATH) -I$(OPENCL_PATH)/include -Wall
+CMAKEFLAGS = -I$(ROOT)/$(INCLUDE_PATH) -I$(OPENCL_PATH)/include -Wall -Wextra -Werror -pedantic-errors
 CLIBSPATHS = -L/lib -L$(OPENCL_PATH)/lib/x86$(SUFFIX64)
 
 ifeq ($(UNAME), GNU/Linux)

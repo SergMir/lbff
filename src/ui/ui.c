@@ -45,6 +45,10 @@ void UI_KeyboardHandler(unsigned char key, int x, int y)
   default:
     break;
   }
+  
+  /* Anti-Warning */
+  x = x;
+  y = y;
 }
 
 /*
@@ -83,6 +87,10 @@ void UI_SpecKeyboardHandler(int key, int x, int y)
     BASE_MoveObjects(dx, dy, 0);
     break;
   }
+  
+  /* Anti-Warning */
+  x = x;
+  y = y;
 }
 
 /*
