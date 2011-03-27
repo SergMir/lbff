@@ -73,9 +73,9 @@ void GRAPH_Redraw(LB_Lattice_p lattice, EXTOBJ_obj_p objects, uint objcnt)
 
   for (i = 0; i < nodes_cnt; ++i)
   {
-    double x, y, z;
+    double x, y, z, j;
     double rel_velocity, v_sum = 0;
-    uint xpos, ypos, zpos, j;
+    uint xpos, ypos, zpos;
     float red, blue;
     
     BASE_GetPosByIdx(lattice, i, &xpos, &ypos, &zpos);

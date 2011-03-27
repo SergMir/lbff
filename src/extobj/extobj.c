@@ -30,7 +30,8 @@
 int EXTOBJ_ForceCalcSimple(void *_obj, EXTOBJ_force_t *input_forces, uint in_forces_num,
         EXTOBJ_force_t *output_forces)
 {
-  int i, maxx = 0, maxy = 0, maxz = 0, minx = 0x7FFFFFFF, miny = 0x7FFFFFFF, minz = 0x7FFFFFFF;
+  int i;
+  double maxx = 0, maxy = 0, maxz = 0, minx = 1e20, miny = 1e20, minz = 1e20;
   EXTOBJ_obj_p obj = (EXTOBJ_obj_p)_obj;
 
   output_forces[0].force = obj->turnedOn ? 1 : 0;

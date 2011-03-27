@@ -85,9 +85,9 @@ double solver_CosAngleBetweenVectors(double *v1, double *v2)
  */
 int SOLVER_GetNeighborByVector(LB_Lattice_p lattice, int node, double *vector)
 {
-  int dx = abs(vector[0]) > 0.577 ? 1 : 0;
-  int dy = abs(vector[1]) > 0.577 ? 1 : 0;
-  int dz = abs(vector[2]) > 0.577 ? 1 : 0;
+  int dx = fabs(vector[0]) > 0.577 ? 1 : 0;
+  int dy = fabs(vector[1]) > 0.577 ? 1 : 0;
+  int dz = fabs(vector[2]) > 0.577 ? 1 : 0;
   uint xpos, ypos, zpos;
 
   BASE_GetPosByIdx(lattice, node, &xpos, &ypos, &zpos);
@@ -115,8 +115,8 @@ void SOLVER_Resolve(LB_Lattice_p lattice, EXTOBJ_obj_p objects, int objnum, doub
 
   for (i = 0; i < nodes_cnt; ++i)
   {
-    uint k = 0, xpos, ypos, zpos;
-    int forces_num = objects[0].recalculate_force(&(objects[0]), NULL, 0, forces);
+    uint xpos, ypos, zpos;
+    int k = 0, forces_num = objects[0].recalculate_force(&(objects[0]), NULL, 0, forces);
     double *current_vector = solver_GetVectors(lattice->node_type);
     double x, y, z;
 
@@ -161,4 +161,3 @@ void SOLVER_Resolve(LB_Lattice_p lattice, EXTOBJ_obj_p objects, int objnum, doub
   
   objnum = objnum;
 }
-

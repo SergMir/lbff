@@ -19,7 +19,7 @@ else
   ECHO = @
 endif
 
-CC         = gcc
+CC         = g++
 CXX        = g++
 CFLAGS     = -Wall
 CXXFLAGS   = -O2

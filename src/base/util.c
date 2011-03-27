@@ -105,7 +105,7 @@ LB_Lattice_t* LB_CreateLattice(LB_lattice_type_t lattice_type,
 
   for (i = 0, ch_vector = lattice->vectors; i < nodes_num; ++i)
   {
-    uint j = 0;
+    int j = 0;
 
     lattice->nodes[i].density = 1.0;
     for (; j < node_type; ++j)
