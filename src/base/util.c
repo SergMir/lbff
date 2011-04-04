@@ -49,7 +49,7 @@ void BASE_ForcesSwitch(int on)
 /*
  * Get xyz indexes of node in lattice by it's index
  */
-void BASE_GetPosByIdx(LB_Lattice_p lattice, int index, uint *x, uint *y, uint *z)
+void BASE_GetPosByIdx(const LB_Lattice_p lattice, int index, uint *x, uint *y, uint *z)
 {
   uint xy = lattice->countX * lattice->countY;
 

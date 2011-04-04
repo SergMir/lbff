@@ -14,7 +14,8 @@ typedef enum
   EXTOBJ_TYPE_LAST
 } EXTOBJ_obj_type_t;
 
-typedef int (*EXTOBJ_force_calculate)(void *obj, EXTOBJ_force_t *input_forces, uint in_forces_num,
+/* Take incoming forces and its number, calculate generated forces, return its number */
+typedef int (*EXTOBJ_force_calculate)(void *obj, const EXTOBJ_force_t *input_forces, uint in_forces_num,
         EXTOBJ_force_t *output_forces);
 
 typedef struct

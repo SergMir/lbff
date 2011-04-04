@@ -27,7 +27,7 @@
 /*
  * Generation of one force from the geometrical centre of object
  */
-int EXTOBJ_ForceCalcSimple(void *_obj, EXTOBJ_force_t *input_forces, uint in_forces_num,
+int EXTOBJ_ForceCalcSimple(void *_obj, const EXTOBJ_force_t *input_forces, uint in_forces_num,
         EXTOBJ_force_t *output_forces)
 {
   int i;

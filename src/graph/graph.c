@@ -58,7 +58,7 @@ int GRAPH_Init(f_mainloop_t mainloop)
 /*
  * Main draw function: draw given lattice and objects
  */
-void GRAPH_Redraw(LB_Lattice_p lattice, EXTOBJ_obj_p objects, uint objcnt)
+void GRAPH_Redraw(const LB_Lattice_p lattice, const EXTOBJ_obj_p objects, uint objcnt)
 {
   uint i, nodes_cnt = lattice->countX * lattice->countY * lattice->countZ;
   double *ch_vector = lattice->vectors;

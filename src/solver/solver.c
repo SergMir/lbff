@@ -70,7 +70,7 @@ double* solver_GetVectors(LB_node_type_t type)
 /*
  * Cosinus of angle between vectors
  */
-double solver_CosAngleBetweenVectors(double *v1, double *v2)
+double solver_CosAngleBetweenVectors(const double *v1, const double *v2)
 {
   double lv1 = sqrt(v1[0]*v1[0] + v1[1]*v1[1] + v1[2]*v1[2]);
   double lv2 = sqrt(v2[0]*v2[0] + v2[1]*v2[1] + v2[2]*v2[2]);
@@ -83,7 +83,7 @@ double solver_CosAngleBetweenVectors(double *v1, double *v2)
 /*
  * Get nearest node vector pointing at from given node
  */
-int SOLVER_GetNeighborByVector(LB_Lattice_p lattice, int node, double *vector)
+int SOLVER_GetNeighborByVector(const LB_Lattice_p lattice, int node, const double *vector)
 {
   int dx = fabs(vector[0]) > 0.577 ? 1 : 0;
   int dy = fabs(vector[1]) > 0.577 ? 1 : 0;
