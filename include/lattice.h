@@ -27,12 +27,14 @@ typedef enum
 typedef struct LB_Node_s
 {
   double density;
+  double viscosity;
 } LB_Node_t;
 
 typedef struct
 {
   LB_Node_t *nodes;
-  double *vectors;
+  double *vectors;  /* Velocities for each characteristic vector for each node */
+  double *fs;       /* Particle distribution for -/- */
   LB_lattice_type_t lattice_type;
   LB_node_type_t node_type;
 
