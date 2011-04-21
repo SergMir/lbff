@@ -101,14 +101,141 @@ int SOLVER_GetNeighborByVector(const LB_Lattice_p lattice, int node, const doubl
   zpos += zpos < lattice->countZ - 1 ? dz : 0;
 
   node = zpos * lattice->countX * lattice->countY + ypos * lattice->countX + xpos;
-
+ 
   return node;
 }
 
 /*
- * Calculate lattice parameters with time delta = dt
+ * Scalar multiplication of two 3D vectors
  */
-void SOLVER_Resolve(LB_Lattice_p lattice, EXTOBJ_obj_p objects, int objnum, double dt)
+double solver_scalarVectorMultiply(double *v1, double *v2)
+{
+  return v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2];
+}
+
+/*
+ * Calculate feq by Bhatnager, Gross, Krook model
+ */
+void solver_feqBHK(LB_Lattice_p lattice, double *fnew, double density, double *velocity)
+{
+  int i;
+  double *current_vector = solver_GetVectors(lattice->node_type);
+
+  for (i = 0; i < lattice->node_type; ++i, current_vector += 3)
+  {
+    double A = 1;
+    double B = 3;
+    double C = 4.5;
+    double D = -1.5;
+    double t;
+
+    t = solver_scalarVectorMultiply(current_vector, velocity);
+    fnew[i] = A + B * t;
+    t *= t;
+    fnew[i] += C * t;
+    t = solver_scalarVectorMultiply(velocity, velocity);
+    t *= t;
+    fnew[i] += D * t;
+    fnew[i] /= density;
+  }
+}
+
+/*
+ * Calculate f equilibrium
+ */
+void solver_feq(LB_Lattice_p lattice, double *fnew, double density, double *velocity)
+{
+  return solver_feqBHK(lattice, fnew, density, velocity);
+}
+
+/*
+ * Calculate with generic LBM
+ */
+void solver_ResolveLBGeneric(LB_Lattice_p lattice, EXTOBJ_obj_p objects, int objnum, double dt)
+{
+  int i, nodes_cnt = lattice->countX * lattice->countY * lattice->countZ;
+  static EXTOBJ_force_t forces[1000];
+  
+  for (i = 0; i < nodes_cnt; ++i)
+  {
+    double density = 0;
+    double u[3];
+    double tau = 3 * lattice->nodes[i].viscosity + 0.5;
+    int k = 0;
+    int forces_num = objects[0].recalculate_force(&(objects[0]), NULL, 0, forces);
+    double *current_vector = solver_GetVectors(lattice->node_type);
+    double fe[3] = {0, 0, 0};
+    double *fnew = new double[lattice->node_type];
+    
+    uint xpos, ypos, zpos;
+    double x, y, z;
+    
+
+    BASE_GetPosByIdx(lattice, i, &xpos, &ypos, &zpos);
+    
+    x = xpos * lattice->sizeX / lattice->countX;
+    y = ypos * lattice->sizeY / lattice->countY;
+    z = zpos * lattice->sizeZ / lattice->countZ;
+    
+    for (k = 0; k < lattice->node_type; ++k, current_vector += 3)
+    {
+      density += lattice->fs[i*3 + k];
+      fe[0] += lattice->fs[i*3 + k] * current_vector[0];
+      fe[1] += lattice->fs[i*3 + k] * current_vector[1];
+      fe[2] += lattice->fs[i*3 + k] * current_vector[2];
+    }
+    u[0] = fe[0] / density;
+    u[1] = fe[1] / density;
+    u[2] = fe[2] / density;
+    
+    lattice->vectors[i * lattice->node_type] = u[0] + u[1] + u[2];
+    
+    solver_feq(lattice, fnew, density, u);
+
+    for (k = 0; k < lattice->node_type; ++k, current_vector += 3)
+    {
+      double delta = (lattice->fs[i*3 + k] - fnew[k]) / tau;
+      //printf("Node %.3d; k %.3d; delta:%f (%f - %f)\n", i, k, delta, lattice->fs[i*3 + k], fnew[k]);
+      lattice->fs[i*3 + k] -= delta;
+    }
+    
+    for (int j = 0; j < forces_num; ++j)
+    {
+      double B = 3;
+      current_vector = solver_GetVectors(lattice->node_type);
+      
+      double dist = 0;
+      dist += (forces[j].points[0] - x) * (forces[j].points[0] - x);
+      dist += (forces[j].points[1] - y) * (forces[j].points[1] - y);
+      dist += (forces[j].points[2] - z) * (forces[j].points[2] - z);
+      dist = sqrt(dist) + 0.1;
+    
+      for (k = 0; k < lattice->node_type; ++k, current_vector += 3)
+      {
+        double ztau = ((2*tau - 1) / 2*tau) * B;
+        double zvm = solver_scalarVectorMultiply(current_vector, forces[j].vector);
+        double delta = ztau * zvm / (100 * dist);
+        
+        if (i == 30 && k == 0)
+        {
+          printf("Node %.3d; k %.3d; force delta:%f\n", i, k, delta);
+        }
+        lattice->fs[i*3 + k] += delta;
+      }
+    }
+    delete[] fnew;
+  }
+
+  lattice = lattice;
+  objects = objects;
+  objnum = objnum;
+  dt = dt;
+}
+
+/*
+ * Calculate with own simple non-realistic "physics"
+ */
+void solver_ResolveNonPhysical(LB_Lattice_p lattice, EXTOBJ_obj_p objects, int objnum, double dt)
 {
   int i, nodes_cnt = lattice->countX * lattice->countY * lattice->countZ;
   static EXTOBJ_force_t forces[1000];
@@ -160,4 +287,13 @@ void SOLVER_Resolve(LB_Lattice_p lattice, EXTOBJ_obj_p objects, int objnum, doub
   }
   
   objnum = objnum;
+}
+
+/*
+ * Calculate lattice parameters with time delta = dt
+ */
+void SOLVER_Resolve(LB_Lattice_p lattice, EXTOBJ_obj_p objects, int objnum, double dt)
+{
+  //solver_ResolveNonPhysical(lattice, objects, objnum, dt);
+  solver_ResolveLBGeneric(lattice, objects, objnum, dt);
 }
