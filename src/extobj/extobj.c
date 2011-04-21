@@ -51,9 +51,18 @@ int EXTOBJ_ForceCalcSimple(void *_obj, const EXTOBJ_force_t *input_forces, uint 
   output_forces[0].points[1] = (maxy + miny) / 2;
   output_forces[0].points[2] = (maxz + minz) / 2;
 
-  output_forces[0].vector[0] = 1;
-  output_forces[0].vector[1] = 0;
-  output_forces[0].vector[2] = 0;
+  if (obj->turnedOn)
+  {
+    output_forces[0].vector[0] = 1;
+    output_forces[0].vector[1] = 0;
+    output_forces[0].vector[2] = 0;
+  }
+  else
+  {
+    output_forces[0].vector[0] = 0;
+    output_forces[0].vector[1] = 0;
+    output_forces[0].vector[2] = 0;
+  }
 
   input_forces = input_forces;
   in_forces_num = in_forces_num;
