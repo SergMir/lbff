@@ -73,7 +73,7 @@ int main(int argc, char *argv[])
   UI_Init();
   SOLVER_Init();
   lattice = LB_CreateLattice(LB_LATTICE_2D_SQUARE, LB_NODE_D2_Q5,
-                             30, 30, 1,
+                             90, 90, 1,
                              90, 90, 1);
   objects = EXTOBJ_CreateObject(EXTOBJ_TYPE_SIMPLE);
   ++objects_cnt;
