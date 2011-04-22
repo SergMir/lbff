@@ -16,11 +16,11 @@ typedef enum
 
 typedef enum
 {
-  LB_NODE_D2_Q5 =   4,
-  LB_NODE_D2_Q9 =   8,
-  LB_NODE_D3_Q7 =   6,
-  LB_NODE_D3_Q15 = 14,
-  LB_NODE_D3_Q19 = 18,
+  LB_NODE_D2_Q5 =   5,
+  LB_NODE_D2_Q9 =   9,
+  LB_NODE_D3_Q7 =   7,
+  LB_NODE_D3_Q15 = 15,
+  LB_NODE_D3_Q19 = 19,
   LB_NODE_LAST
 } LB_node_type_t;
 
