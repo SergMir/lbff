@@ -17,6 +17,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <GL/glut.h>
+#include <unistd.h>
 
 /* ------------------------------- Defines --------------------------------- */
 
@@ -65,14 +66,15 @@ void mainLoop()
 int main(int argc, char *argv[])
 {
   glutInit(&argc, argv);
-  glutInitWindowSize(400, 300);
-  glutInitWindowPosition(500, 500);
+  glutInitWindowSize(800, 600);
+  glutInitWindowPosition(100, 100);
   glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE);
   glutCreateWindow("LBFF");
+  glutFullScreen();
 
   UI_Init();
   SOLVER_Init();
-  lattice = LB_CreateLattice(LB_LATTICE_2D_SQUARE, LB_NODE_D2_Q5,
+  lattice = LB_CreateLattice(LB_LATTICE_2D_SQUARE, LB_NODE_D2_Q9,
                              90, 90, 1,
                              90, 90, 1);
   objects = EXTOBJ_CreateObject(EXTOBJ_TYPE_SIMPLE);

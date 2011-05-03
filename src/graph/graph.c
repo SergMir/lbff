@@ -13,6 +13,8 @@
 #include <graph.h>
 
 #include <GL/glut.h>
+#include <stdio.h>
+#include <math.h>
 
 /* ------------------------------- Defines --------------------------------- */
 
@@ -61,23 +63,26 @@ int GRAPH_Init(f_mainloop_t mainloop)
 void GRAPH_Redraw(const LB_Lattice_p lattice, const EXTOBJ_obj_p objects, uint objcnt)
 {
   uint i, nodes_cnt = lattice->countX * lattice->countY * lattice->countZ;
-  double *ch_vector = lattice->vectors;
+  LB3D_p ch_vector = lattice->velocities;
+  double minv = 1000000, maxv = 0, avgv = 0;
+  static double new_max = 0;
 
   glClear(GL_COLOR_BUFFER_BIT);
 
   glColor3f(0.0f, 0.0f, 1.0f);
   glLineWidth(1);
-  glPointSize(5);
+  glPointSize(4);
 
-  glBegin(GL_POINTS);
+  //glBegin(GL_POINTS);
+  glBegin(GL_LINES);
 
   for (i = 0; i < nodes_cnt; ++i)
   {
-    double x, y, z, j;
+    double x, y, z;
     double rel_velocity, v_sum = 0;
     uint xpos, ypos, zpos;
     float red, blue;
-    
+
     BASE_GetPosByIdx(lattice, i, &xpos, &ypos, &zpos);
     
 
@@ -85,17 +90,27 @@ void GRAPH_Redraw(const LB_Lattice_p lattice, const EXTOBJ_obj_p objects, uint o
     y = ypos * lattice->sizeY / lattice->countY;
     z = zpos * lattice->sizeZ / lattice->countZ;
 
-    for (j = 0; j < lattice->node_type; ++j)
-    {
-      v_sum += *(ch_vector++);
-    }
-    rel_velocity = min(1.0, v_sum / 1.0);
+    v_sum = fabs(ch_vector->x) + fabs(ch_vector->y) + fabs(ch_vector->z);
+    ch_vector++;
+    minv = v_sum < minv ? v_sum : minv;
+    maxv = v_sum > maxv ? v_sum : maxv;
+    avgv += v_sum;
+    rel_velocity = min(1.0, v_sum / new_max);
+    rel_velocity = min(1.0, v_sum / 3.0);
     red = rel_velocity;
     blue = 1.0 - red;
     glColor3f(red, 0.0f, blue);
     glVertex2f(x, y);
+    double d = rel_velocity;
+    double dx = lattice->velocities[i].x > 0 ? d : -d;
+    double dy = lattice->velocities[i].y > 0 ? d : -d;
+    glVertex2f(x + dx, y + dy);
   }
   glEnd();
+  
+  avgv /= nodes_cnt;
+  printf("min %f, max %f, avg %f\n", minv, maxv, avgv);
+  new_max = maxv;
 
   glColor3f(0, 1.0f, 0);
 

@@ -3,6 +3,13 @@
 
 #include <sys/types.h>
 
+typedef struct LB3D_s
+{
+  double x;
+  double y;
+  double z;
+} LB3D_t, *LB3D_p;
+
 typedef enum
 {
   LB_LATTICE_2D_SQUARE,
@@ -33,7 +40,7 @@ typedef struct LB_Node_s
 typedef struct
 {
   LB_Node_t *nodes;
-  double *vectors;  /* Velocities for each characteristic vector for each node */
+  LB3D_p velocities;  /* Velocities for each characteristic vector for each node */
   double *fs;       /* Particle distribution for -/- */
   LB_lattice_type_t lattice_type;
   LB_node_type_t node_type;

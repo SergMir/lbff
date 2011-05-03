@@ -34,7 +34,7 @@ int EXTOBJ_ForceCalcSimple(void *_obj, const EXTOBJ_force_t *input_forces, uint 
   double maxx = 0, maxy = 0, maxz = 0, minx = 1e20, miny = 1e20, minz = 1e20;
   EXTOBJ_obj_p obj = (EXTOBJ_obj_p)_obj;
 
-  output_forces[0].force = obj->turnedOn ? 1 : 0;
+  output_forces[0].force = obj->turnedOn ? 1.0 : 0;
 
   for (i = 0; i < obj->points_cnt; ++i)
   {
@@ -47,21 +47,21 @@ int EXTOBJ_ForceCalcSimple(void *_obj, const EXTOBJ_force_t *input_forces, uint 
     maxz = max(maxz, obj->points[i * 3 + 2]);
     minz = min(minz, obj->points[i * 3 + 2]);
   }
-  output_forces[0].points[0] = (maxx + minx) / 2;
-  output_forces[0].points[1] = (maxy + miny) / 2;
-  output_forces[0].points[2] = (maxz + minz) / 2;
+  output_forces[0].points.x = (maxx + minx) / 2;
+  output_forces[0].points.y = (maxy + miny) / 2;
+  output_forces[0].points.z = (maxz + minz) / 2;
 
   if (obj->turnedOn)
   {
-    output_forces[0].vector[0] = 1;
-    output_forces[0].vector[1] = 0;
-    output_forces[0].vector[2] = 0;
+    output_forces[0].vector.x = 0;
+    output_forces[0].vector.y = 1 * output_forces[0].force;
+    output_forces[0].vector.z = 0;
   }
   else
   {
-    output_forces[0].vector[0] = 0;
-    output_forces[0].vector[1] = 0;
-    output_forces[0].vector[2] = 0;
+    output_forces[0].vector.x = 0;
+    output_forces[0].vector.y = 0;
+    output_forces[0].vector.z = 0;
   }
 
   input_forces = input_forces;

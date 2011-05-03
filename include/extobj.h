@@ -3,8 +3,8 @@
 
 typedef struct
 {
-  double points[3];
-  double vector[3];
+  LB3D_t points;
+  LB3D_t vector;
   double  force;
 } EXTOBJ_force_t;
 

@@ -17,6 +17,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
+#include <string.h>
 
 /* ------------------------------- Defines --------------------------------- */
 
@@ -39,26 +40,26 @@ int SOLVER_Init()
 /*
  * Get set of characteristic directions vectors from node type
  */
-double* solver_GetVectors(LB_node_type_t type)
+solver_vector_p solver_GetVectors(LB_node_type_t type)
 {
-  double *vectors = NULL;
+  solver_vector_p vectors = NULL;
 
   switch(type)
   {
   case LB_NODE_D2_Q5:
-    vectors = (double*)solver_vectors_D2_Q5;
+    vectors = solver_vectors_D2_Q5;
     break;
   case LB_NODE_D2_Q9:
-    vectors = (double*)solver_vectors_D2_Q9;
+    vectors = solver_vectors_D2_Q9;
     break;
   case LB_NODE_D3_Q7:
-    vectors = (double*)solver_vectors_D3_Q7;
+    vectors = solver_vectors_D3_Q7;
     break;
   case LB_NODE_D3_Q15:
-    vectors = (double*)solver_vectors_D3_Q15;
+    vectors = solver_vectors_D3_Q15;
     break;
   case LB_NODE_D3_Q19:
-    vectors = (double*)solver_vectors_D3_Q19;
+    vectors = solver_vectors_D3_Q19;
     break;
   default:
     break;
@@ -70,12 +71,12 @@ double* solver_GetVectors(LB_node_type_t type)
 /*
  * Cosinus of angle between vectors
  */
-double solver_CosAngleBetweenVectors(const double *v1, const double *v2)
+double solver_CosAngleBetweenVectors(const LB3D_p v1, const LB3D_p v2)
 {
-  double lv1 = sqrt(v1[0]*v1[0] + v1[1]*v1[1] + v1[2]*v1[2]);
-  double lv2 = sqrt(v2[0]*v2[0] + v2[1]*v2[1] + v2[2]*v2[2]);
+  double lv1 = sqrt(v1->x*v1->x + v1->y*v1->y + v1->z*v1->z);
+  double lv2 = sqrt(v2->x*v2->x + v2->y*v2->y + v2->z*v2->z);
   double l = sqrt(lv1 * lv2);
-  double ab = v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2];
+  double ab = v1->x*v2->x + v1->y*v2->y + v1->z*v2->z;
 
   return ab / l;
 }
@@ -83,67 +84,91 @@ double solver_CosAngleBetweenVectors(const double *v1, const double *v2)
 /*
  * Get nearest node vector pointing at from given node
  */
-int SOLVER_GetNeighborByVector(const LB_Lattice_p lattice, int node, const double *vector)
+int SOLVER_GetNeighborByVector(const LB_Lattice_p lattice, int node, const solver_vector_p vector)
 {
-  int dx = fabs(vector[0]) > 0.577 ? 1 : 0;
-  int dy = fabs(vector[1]) > 0.577 ? 1 : 0;
-  int dz = fabs(vector[2]) > 0.577 ? 1 : 0;
+  int dx = fabs(vector->x) > 0.577 ? 1 : 0;
+  int dy = fabs(vector->y) > 0.577 ? 1 : 0;
+  int dz = fabs(vector->z) > 0.577 ? 1 : 0;
   uint xpos, ypos, zpos;
 
   BASE_GetPosByIdx(lattice, node, &xpos, &ypos, &zpos);
 
-  dx *= vector[0] > 0 ? 1 : -1;
-  dy *= vector[1] > 0 ? 1 : -1;
-  dz *= vector[2] > 0 ? 1 : -1;
+  dx *= vector->x > 0 ? 1 : -1;
+  dy *= vector->y > 0 ? 1 : -1;
+  dz *= vector->z > 0 ? 1 : -1;
+  
+  do
+  {
+    node = -1;
+    
+    if (dx < 0 && xpos == 0)
+      break;
+    
+    if (dx > 0 && xpos == (lattice->countX - 1))
+      break;
+    
+    if (dy < 0 && ypos == 0)
+      break;
+    
+    if (dy > 0 && ypos == (lattice->countY - 1))
+      break;
+    
+    if (dz < 0 && zpos == 0)
+      break;
+    
+    if (dz > 0 && zpos == (lattice->countZ - 1))
+      break;
+    
+    xpos += dx;
+    ypos += dy;
+    zpos += dz;
+    
+    node = zpos * lattice->countX * lattice->countY + ypos * lattice->countX + xpos;
+  } while (0);
 
-  xpos += xpos < lattice->countX - 1 ? dx : 0;
-  ypos += ypos < lattice->countY - 1 ? dy : 0;
-  zpos += zpos < lattice->countZ - 1 ? dz : 0;
-
-  node = zpos * lattice->countX * lattice->countY + ypos * lattice->countX + xpos;
- 
   return node;
 }
 
 /*
  * Scalar multiplication of two 3D vectors
  */
-double solver_scalarVectorMultiply(double *v1, double *v2)
+double solver_scalarVectorMultiply(LB3D_p v1, LB3D_p v2)
 {
-  return v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2];
+  return (v1->x * v2->x) + (v1->y * v2->y) + (v1->z * v2->z);
 }
 
 /*
  * Calculate feq by Bhatnager, Gross, Krook model
  */
-void solver_feqBHK(LB_Lattice_p lattice, double *fnew, double density, double *velocity)
+void solver_feqBHK(LB_Lattice_p lattice, double *fnew, double density, LB3D_p velocity)
 {
   int i;
-  double *current_vector = solver_GetVectors(lattice->node_type);
+  solver_vector_p current_vector = solver_GetVectors(lattice->node_type);
 
-  for (i = 0; i < lattice->node_type; ++i, current_vector += 3)
+  for (i = 0; i < lattice->node_type; ++i, ++current_vector)
   {
+    double c = 1;
+    double teta = c * c / 3; 
     double A = 1;
-    double B = 3;
-    double C = 4.5;
-    double D = -1.5;
+    double B = 1 / teta;
+    double C = 1 / (2 * teta * teta);
+    double D = - 1 / (2 * teta);
     double t;
 
-    t = solver_scalarVectorMultiply(current_vector, velocity);
+    t = solver_scalarVectorMultiply((LB3D_p)current_vector, velocity);
     fnew[i] = A + B * t;
     t *= t;
     fnew[i] += C * t;
     t = solver_scalarVectorMultiply(velocity, velocity);
-    t *= t;
     fnew[i] += D * t;
-    fnew[i] /= density;
+    fnew[i] *= density * current_vector->omega;
   }
 }
 
 /*
  * Calculate f equilibrium
  */
-void solver_feq(LB_Lattice_p lattice, double *fnew, double density, double *velocity)
+void solver_feq(LB_Lattice_p lattice, double *fnew, double density, LB3D_p velocity)
 {
   return solver_feqBHK(lattice, fnew, density, velocity);
 }
@@ -155,21 +180,26 @@ void solver_ResolveLBGeneric(LB_Lattice_p lattice, EXTOBJ_obj_p objects, int obj
 {
   int i, nodes_cnt = lattice->countX * lattice->countY * lattice->countZ;
   static EXTOBJ_force_t forces[1000];
+  double *feqs = new double[lattice->node_type];
+  int forces_num = objects[0].recalculate_force(&(objects[0]), NULL, 0, forces);
   
+  memset(lattice->fs + nodes_cnt * lattice->node_type,
+         0,
+         sizeof(double) * nodes_cnt * lattice->node_type);
+
   for (i = 0; i < nodes_cnt; ++i)
   {
-    double density = 0;
-    double u[3];
-    double tau = 3 * lattice->nodes[i].viscosity + 0.5;
-    int k = 0;
-    int forces_num = objects[0].recalculate_force(&(objects[0]), NULL, 0, forces);
-    double *current_vector = solver_GetVectors(lattice->node_type);
-    double fe[3] = {0, 0, 0};
-    double *fnew = new double[lattice->node_type];
+    solver_vector_p current_vector = solver_GetVectors(lattice->node_type);
     
+    LB3D_p u = lattice->velocities + i;
+    double tau = 300;
+    
+    double density = 0;
+    LB3D_t fe = {0, 0, 0};
+    
+    int k = 0;
     uint xpos, ypos, zpos;
     double x, y, z;
-    
 
     BASE_GetPosByIdx(lattice, i, &xpos, &ypos, &zpos);
     
@@ -177,54 +207,88 @@ void solver_ResolveLBGeneric(LB_Lattice_p lattice, EXTOBJ_obj_p objects, int obj
     y = ypos * lattice->sizeY / lattice->countY;
     z = zpos * lattice->sizeZ / lattice->countZ;
     
-    for (k = 0; k < lattice->node_type; ++k, current_vector += 3)
+    if (xpos == 0 ||
+      xpos == lattice->countX - 1 ||
+      ypos == 0 ||
+      ypos == lattice->countY - 1)
     {
-      density += lattice->fs[i*3 + k];
-      fe[0] += lattice->fs[i*3 + k] * current_vector[0];
-      fe[1] += lattice->fs[i*3 + k] * current_vector[1];
-      fe[2] += lattice->fs[i*3 + k] * current_vector[2];
+      for (k = 0; k < lattice->node_type; ++k, current_vector += 4)
+      {
+        lattice->fs[nodes_cnt * lattice->node_type + i * lattice->node_type + k] = 0;
+      }
+      continue;
     }
-    u[0] = fe[0] / density;
-    u[1] = fe[1] / density;
-    u[2] = fe[2] / density;
-    
-    lattice->vectors[i * lattice->node_type] = u[0] + u[1] + u[2];
-    
-    solver_feq(lattice, fnew, density, u);
 
-    for (k = 0; k < lattice->node_type; ++k, current_vector += 3)
+    for (k = 0; k < lattice->node_type; ++k, ++current_vector)
     {
-      double delta = (lattice->fs[i*3 + k] - fnew[k]) / tau;
-      //printf("Node %.3d; k %.3d; delta:%f (%f - %f)\n", i, k, delta, lattice->fs[i*3 + k], fnew[k]);
-      lattice->fs[i*3 + k] -= delta;
+      double fs = lattice->fs[i * lattice->node_type + k];
+      density += fs;
+      fe.x += fs * current_vector->x;
+      fe.y += fs * current_vector->y;
+      fe.z += fs * current_vector->z;
     }
-    
+    u->x = fe.x / density;
+    u->y = fe.y / density;
+    u->z = fe.z / density;
+
+    solver_feq(lattice, feqs, density, u);
+
+    current_vector = solver_GetVectors(lattice->node_type);
+
+    for (k = 0; k < lattice->node_type; ++k, ++current_vector)
+    {
+      int next_node = SOLVER_GetNeighborByVector(lattice, i, current_vector);
+
+      if (next_node != -1)
+      {
+        double fs = lattice->fs[i*lattice->node_type + k];
+        double delta = (fs - feqs[k]) / tau;
+        lattice->fs[nodes_cnt * lattice->node_type + next_node * lattice->node_type + k] = fs + delta;
+      }
+      else
+      {
+        int opp_k;
+        solver_vector_p opp_current_vector = solver_GetVectors(lattice->node_type);
+        for (opp_k = 0; opp_k < lattice->node_type; ++opp_k)
+        {
+          if (
+            fabs(current_vector->x + opp_current_vector[opp_k].x) < 0.001 &&
+            fabs(current_vector->y + opp_current_vector[opp_k].y) < 0.001 &&
+            fabs(current_vector->z + opp_current_vector[opp_k].z) < 0.001)
+          {
+            break;
+          }
+        }
+        if (opp_k < lattice->node_type)
+        {
+          lattice->fs[nodes_cnt * lattice->node_type + i * lattice->node_type + k] = 0;
+          lattice->fs[nodes_cnt * lattice->node_type + i * lattice->node_type + opp_k] = 0;
+        }
+      }
+    }
+
     for (int j = 0; j < forces_num; ++j)
     {
       double B = 3;
       current_vector = solver_GetVectors(lattice->node_type);
       
       double dist = 0;
-      dist += (forces[j].points[0] - x) * (forces[j].points[0] - x);
-      dist += (forces[j].points[1] - y) * (forces[j].points[1] - y);
-      dist += (forces[j].points[2] - z) * (forces[j].points[2] - z);
-      dist = sqrt(dist) + 0.1;
+      dist += (forces[j].points.x - x) * (forces[j].points.x - x);
+      dist += (forces[j].points.y - y) * (forces[j].points.y - y);
+      dist += (forces[j].points.z - z) * (forces[j].points.z - z);
+      dist = sqrt(dist);
     
-      for (k = 0; k < lattice->node_type; ++k, current_vector += 3)
+      for (k = 0; k < lattice->node_type; ++k, ++current_vector)
       {
         double ztau = ((2*tau - 1) / 2*tau) * B;
-        double zvm = solver_scalarVectorMultiply(current_vector, forces[j].vector);
-        double delta = ztau * zvm / (100 * dist);
-        
-        if (i == 30 && k == 0)
-        {
-          printf("Node %.3d; k %.3d; force delta:%f\n", i, k, delta);
-        }
-        lattice->fs[i*3 + k] += delta;
+        double zvm = solver_scalarVectorMultiply((LB3D_p)current_vector, &(forces[j].vector));
+        double delta = ztau * zvm * exp(-dist/0.1);
+        lattice->fs[nodes_cnt * lattice->node_type + i*lattice->node_type + k] += delta;
       }
     }
-    delete[] fnew;
   }
+  delete[] feqs;
+  memcpy(lattice->fs, lattice->fs + nodes_cnt * lattice->node_type, sizeof(double) * nodes_cnt * lattice->node_type);
 
   lattice = lattice;
   objects = objects;
@@ -244,7 +308,7 @@ void solver_ResolveNonPhysical(LB_Lattice_p lattice, EXTOBJ_obj_p objects, int o
   {
     uint xpos, ypos, zpos;
     int k = 0, forces_num = objects[0].recalculate_force(&(objects[0]), NULL, 0, forces);
-    double *current_vector = solver_GetVectors(lattice->node_type);
+    solver_vector_p current_vector = solver_GetVectors(lattice->node_type);
     double x, y, z;
 
     BASE_GetPosByIdx(lattice, i, &xpos, &ypos, &zpos);
@@ -261,28 +325,28 @@ void solver_ResolveNonPhysical(LB_Lattice_p lattice, EXTOBJ_obj_p objects, int o
       
       for (; j < forces_num; ++j)
       {
-        double cosfi = solver_CosAngleBetweenVectors(current_vector, forces[j].vector);
+        double cosfi = solver_CosAngleBetweenVectors((LB3D_p)current_vector, &(forces[j].vector));
         double dist = 0;
 
-        dist += (forces[j].points[0] - x) * (forces[j].points[0] - x);
-        dist += (forces[j].points[1] - y) * (forces[j].points[1] - y);
-        dist += (forces[j].points[2] - z) * (forces[j].points[2] - z);
+        dist += (forces[j].points.x - x) * (forces[j].points.x - x);
+        dist += (forces[j].points.y - y) * (forces[j].points.y - y);
+        dist += (forces[j].points.z - z) * (forces[j].points.z - z);
         dist = sqrt(dist) + 0.1;
 
         if (cosfi > 0)
         {
           double delta_force = 0.05 * forces[j].force * cosfi / (lattice->nodes[i].density * dist);
-          lattice->vectors[i * lattice->node_type + k] += max(delta_force, 0);
+          lattice->velocities[i * lattice->node_type + k].x += max(delta_force, 0);
         }
 
 
-        lattice->vectors[i * lattice->node_type + k] *= 9.95 * dt;
+        lattice->velocities[i * lattice->node_type + k].x *= 9.95 * dt;
       }
 
-      delta = 0.01 * lattice->vectors[i * lattice->node_type + k];
+      delta = 0.01 * lattice->velocities[i * lattice->node_type + k].x;
 
-      lattice->vectors[i * lattice->node_type + k] -= delta;
-      lattice->vectors[SOLVER_GetNeighborByVector(lattice, i, current_vector) * lattice->node_type + k] += delta;
+      lattice->velocities[i * lattice->node_type + k].x -= delta;
+      lattice->velocities[SOLVER_GetNeighborByVector(lattice, i, current_vector) * lattice->node_type + k].x += delta;
     }
   }
   
