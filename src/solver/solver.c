@@ -208,7 +208,7 @@ void solver_ResolveLBGeneric(LB_Lattice_p lattice, EXTOBJ_obj_p objects, int obj
       ypos == 0 ||
       ypos == lattice->countY - 1)
     {
-      for (k = 0; k < lattice->node_type; ++k, current_vector += 4)
+      for (k = 0; k < lattice->node_type; ++k, ++current_vector)
       {
         lattice->fs[nodes_cnt * lattice->node_type + i * lattice->node_type + k] = 0;
       }
