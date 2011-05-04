@@ -143,25 +143,21 @@ double solver_scalarVectorMultiply(LB3D_p v1, LB3D_p v2)
 void solver_feqBHK(LB_Lattice_p lattice, double *fnew, double density, LB3D_p velocity)
 {
   int i;
-  solver_vector_p current_vector = solver_GetVectors(lattice->node_type);
+  solver_vector_p vector = solver_GetVectors(lattice->node_type);
 
-  for (i = 0; i < lattice->node_type; ++i, ++current_vector)
+  for (i = 0; i < lattice->node_type; ++i)
   {
     double c = 1;
-    double teta = c * c / 3; 
+    double teta = c * c / 3;
     double A = 1;
     double B = 1 / teta;
     double C = 1 / (2 * teta * teta);
     double D = - 1 / (2 * teta);
     double t;
 
-    t = solver_scalarVectorMultiply((LB3D_p)current_vector, velocity);
-    fnew[i] = A + B * t;
-    t *= t;
-    fnew[i] += C * t;
-    t = solver_scalarVectorMultiply(velocity, velocity);
-    fnew[i] += D * t;
-    fnew[i] *= density * current_vector->omega;
+    t = solver_scalarVectorMultiply((LB3D_p)(vector + i), velocity);
+    fnew[i] = A + B * t + C * t * t + D * solver_scalarVectorMultiply(velocity, velocity);
+    fnew[i] *= density * vector[i].omega;
   }
 }
 
