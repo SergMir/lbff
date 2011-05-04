@@ -120,17 +120,17 @@ void GRAPH_Redraw(const LB_Lattice_p lattice, const EXTOBJ_obj_p objects, uint o
     int j = 0;
     for (j = 0; j < objects[i].points_cnt - 1; ++j)
     {
-      glVertex2f(objects[i].points[ j    * 3 + 0],
-                 objects[i].points[ j    * 3 + 1]);
+      glVertex2f(objects[i].points[j].x,
+                 objects[i].points[j].y);
       
-      glVertex2f(objects[i].points[(j+1) * 3 + 0],
-                 objects[i].points[(j+1) * 3 + 1]);
+      glVertex2f(objects[i].points[j+1].x,
+                 objects[i].points[j+1].y);
     }
     
-    glVertex2f(objects[i].points[j * 3 + 0],
-               objects[i].points[j * 3 + 1]);
-    glVertex2f(objects[i].points[0],
-               objects[i].points[1]);
+    glVertex2f(objects[i].points[j].x,
+               objects[i].points[j].y);
+    glVertex2f(objects[i].points[0].x,
+               objects[i].points[0].y);
   }
   glEnd();
 

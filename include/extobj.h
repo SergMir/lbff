@@ -20,7 +20,7 @@ typedef int (*EXTOBJ_force_calculate)(void *obj, const EXTOBJ_force_t *input_for
 
 typedef struct
 {
-  double *points;
+  LB3D_p points;
   int points_cnt;
   int turnedOn;
   EXTOBJ_force_calculate recalculate_force;

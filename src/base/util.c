@@ -70,9 +70,9 @@ void BASE_MoveObjects(double dx, double dy, double dz)
   {
     for (j = 0; j < objects[i].points_cnt; ++j)
     {
-      objects[i].points[j * 3 + 0] += dx;
-      objects[i].points[j * 3 + 1] += dy;
-      objects[i].points[j * 3 + 2] += dz;
+      objects[i].points[j].x += dx;
+      objects[i].points[j].y += dy;
+      objects[i].points[j].z += dz;
     }
   }
 }
