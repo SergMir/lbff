@@ -18,6 +18,8 @@
 
 /* ------------------------------- Defines --------------------------------- */
 
+#define RERP_VECTORS
+
 /* -------------------------------- Types ---------------------------------- */
 
 /* --------------------------- Local Routines ------------------------------ */
@@ -73,8 +75,11 @@ void GRAPH_Redraw(const LB_Lattice_p lattice, const EXTOBJ_obj_p objects, uint o
   glLineWidth(1);
   glPointSize(4);
 
-  //glBegin(GL_POINTS);
+#if defined(RERP_VECTORS)
   glBegin(GL_LINES);
+#else
+  glBegin(GL_POINTS);
+#endif
 
   for (i = 0; i < nodes_cnt; ++i)
   {
@@ -90,7 +95,10 @@ void GRAPH_Redraw(const LB_Lattice_p lattice, const EXTOBJ_obj_p objects, uint o
     y = ypos * lattice->sizeY / lattice->countY;
     z = zpos * lattice->sizeZ / lattice->countZ;
 
-    v_sum = fabs(ch_vector->x) + fabs(ch_vector->y) + fabs(ch_vector->z);
+    v_sum = sqrt(
+            ch_vector->x * ch_vector->x +
+            ch_vector->y * ch_vector->y +
+            ch_vector->z * ch_vector->z);
     ch_vector++;
     minv = v_sum < minv ? v_sum : minv;
     maxv = v_sum > maxv ? v_sum : maxv;
@@ -101,10 +109,14 @@ void GRAPH_Redraw(const LB_Lattice_p lattice, const EXTOBJ_obj_p objects, uint o
     blue = 1.0 - red;
     glColor3f(red, 0.0f, blue);
     glVertex2f(x, y);
+  #if defined(RERP_VECTORS)
     double d = rel_velocity;
     double dx = lattice->velocities[i].x > 0 ? d : -d;
+    dx *= lattice->sizeX / lattice->countX;
     double dy = lattice->velocities[i].y > 0 ? d : -d;
+    dy *= lattice->sizeY / lattice->countY;
     glVertex2f(x + dx, y + dy);
+  #endif
   }
   glEnd();
   
