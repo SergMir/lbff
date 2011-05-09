@@ -2,3 +2,4 @@ glob:.obj/
 glob:user.mk
 glob:lbff.exe
 glob:nbproject/
+glob:lbff.exe.stackdump
