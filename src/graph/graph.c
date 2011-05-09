@@ -109,7 +109,7 @@ void GRAPH_Redraw(const LB_Lattice_p lattice, const EXTOBJ_obj_p objects, uint o
   glEnd();
   
   avgv /= nodes_cnt;
-  printf("min %f, max %f, avg %f\n", minv, maxv, avgv);
+  printf("min %10.4f, max %10.4f, avg %10.4f\n", minv, maxv, avgv);
   new_max = maxv;
 
   glColor3f(0, 1.0f, 0);
