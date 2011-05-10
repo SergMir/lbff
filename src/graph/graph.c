@@ -104,7 +104,7 @@ void GRAPH_Redraw(const LB_Lattice_p lattice, const EXTOBJ_obj_p objects, uint o
     maxv = v_sum > maxv ? v_sum : maxv;
     avgv += v_sum;
     rel_velocity = min(1.0, v_sum / new_max);
-    rel_velocity = min(1.0, v_sum / 3.0);
+    //rel_velocity = min(1.0, v_sum / 2.0);
     red = rel_velocity;
     blue = 1.0 - red;
     glColor3f(red, 0.0f, blue);

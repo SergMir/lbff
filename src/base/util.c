@@ -110,9 +110,14 @@ LB_Lattice_t* LB_CreateLattice(LB_lattice_type_t lattice_type,
 
     lattice->nodes[i].density = 1.0;
     lattice->nodes[i].viscosity = 1.0; /* */
-    for (; j < node_type; ++j)
+    *(fs_vector++) = 4.0 / 9.0;
+    for (j = 1; j < 5; ++j)
     {
-      *(fs_vector++) = 0.000001;
+      *(fs_vector++) = 1.0 / 9.0;
+    }
+    for (j = 5; j < 9; ++j)
+    {
+      *(fs_vector++) = 1.0 / 36.0;
     }
   }
 

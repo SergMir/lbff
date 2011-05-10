@@ -139,7 +139,7 @@ double solver_scalarVectorMultiply(LB3D_p v1, LB3D_p v2)
   return (v1->x * v2->x) + (v1->y * v2->y) + (v1->z * v2->z);
 }
 
-#define BHK_VAR 1
+#define BHK_VAR 0
 
 /*
  * Calculate feq by Bhatnager, Gross, Krook model
@@ -157,22 +157,10 @@ double solver_feqBHK(LB_Lattice_p lattice, double density, LB3D_p velocity, solv
     double D = - 1 / (2 * teta);
     double t;
 
-    t = 3 * solver_scalarVectorMultiply((LB3D_p)vector, velocity);
-    fnew = A + B * t + C * t * t + D * solver_scalarVectorMultiply(velocity, velocity);
-    fnew *= vector->omega;
-    fnew *= density;
-#elif BHK_VAR == 1
-    double c = 1;
-    double teta = c * c / 3;
-    double A = density;
-    double B = 1 / teta;
-    double C = 1 / (2 * teta * teta);
-    double D = - 1 / (2 * teta);
-    double t;
-
     t = solver_scalarVectorMultiply((LB3D_p)vector, velocity);
     fnew = A + B * t + C * t * t + D * solver_scalarVectorMultiply(velocity, velocity);
     fnew *= vector->omega;
+    fnew *= density;
 #endif
 
     lattice = lattice;
@@ -196,7 +184,7 @@ void solver_ResolveLBGeneric(LB_Lattice_p lattice, EXTOBJ_obj_p objects, int obj
   
   
   solver_vector_p vector = solver_GetVectors(lattice->node_type);
-  double tau = 1.5;
+  double tau = 0.7;
   double *fsn = lattice->fs + nodes_cnt * lattice->node_type;
   
   memset(fsn,
@@ -260,8 +248,7 @@ void solver_ResolveLBGeneric(LB_Lattice_p lattice, EXTOBJ_obj_p objects, int obj
         }
         if (opp_k < lattice->node_type)
         {
-          fsn[i * lattice->node_type + opp_k] += fsn[i * lattice->node_type + k];
-          fsn[i * lattice->node_type + k] = 0;   
+          fsn[i * lattice->node_type + opp_k] += lattice->fs[i * lattice->node_type + k];
         }
       }
     }
@@ -276,6 +263,7 @@ void solver_ResolveLBGeneric(LB_Lattice_p lattice, EXTOBJ_obj_p objects, int obj
     {
       double B = 3, mindist = 10e5;
       int k, mini = 0;
+      double density = 0;
 
       for (i = 0; i < nodes_cnt; ++i)
       {
@@ -302,6 +290,13 @@ void solver_ResolveLBGeneric(LB_Lattice_p lattice, EXTOBJ_obj_p objects, int obj
 
       for (k = 0; k < lattice->node_type; ++k)
       {
+        double fs = fsn[mini * lattice->node_type + k];
+        density += fs;
+      }
+
+      for (k = 0; k < lattice->node_type; ++k)
+      {
+#if 0
         double ztau = ((2 * tau - 1) / (2 * tau)) * B;
         double zvm = solver_scalarVectorMultiply((LB3D_p) (vector + k), &(forces[j].vector));
         double delta = ztau * zvm * 100000.1;
@@ -309,6 +304,17 @@ void solver_ResolveLBGeneric(LB_Lattice_p lattice, EXTOBJ_obj_p objects, int obj
         {
           fsn[mini * lattice->node_type + k] += delta;
         }
+#else
+        LB3D_t nvec = {
+          vector[k].x - lattice->velocities[mini].x,
+          vector[k].y - lattice->velocities[mini].y,
+          vector[k].z - lattice->velocities[mini].z
+        };
+        double delta = solver_scalarVectorMultiply(&(forces[j].vector), &nvec);
+        delta *= solver_feq(lattice, density, &(lattice->velocities[mini]), vector + k);
+        fsn[mini * lattice->node_type + k] += delta;
+        B= B;
+#endif
       }
     }
   }
