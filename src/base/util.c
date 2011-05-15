@@ -9,6 +9,7 @@
  */
 #include <lattice.h>
 #include <extobj.h>
+#include <solver.h>
 
 #include <stdlib.h>
 
@@ -86,9 +87,8 @@ LB_Lattice_t* LB_CreateLattice(LB_lattice_type_t lattice_type,
                                double sizeX, double sizeY, double sizeZ)
 {
   LB_Lattice_t *lattice = (LB_Lattice_t *)malloc(sizeof(LB_Lattice_t));
-  int i = 0, nodes_num = countX * countY * countZ;
-  double *fs_vector;
-
+  int nodes_num = countX * countY * countZ;
+  
   lattice->lattice_type = lattice_type;
   lattice->node_type = node_type;
 
@@ -104,22 +104,7 @@ LB_Lattice_t* LB_CreateLattice(LB_lattice_type_t lattice_type,
   lattice->velocities = (LB3D_p)malloc(nodes_num * sizeof(LB3D_t));
   lattice->fs =      (double *)malloc(2 * sizeof(double) * nodes_num * node_type);
 
-  for (i = 0, fs_vector = lattice->fs; i < nodes_num; ++i)
-  {
-    int j = 0;
-
-    lattice->nodes[i].density = 1.0;
-    lattice->nodes[i].viscosity = 1.0; /* */
-    *(fs_vector++) = 4.0 / 9.0;
-    for (j = 1; j < 5; ++j)
-    {
-      *(fs_vector++) = 1.0 / 9.0;
-    }
-    for (j = 5; j < 9; ++j)
-    {
-      *(fs_vector++) = 1.0 / 36.0;
-    }
-  }
+  SOLVER_InitLattice(lattice);
 
   return lattice;
 }

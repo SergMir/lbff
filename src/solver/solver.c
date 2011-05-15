@@ -139,6 +139,31 @@ double solver_scalarVectorMultiply(LB3D_p v1, LB3D_p v2)
   return (v1->x * v2->x) + (v1->y * v2->y) + (v1->z * v2->z);
 }
 
+/*
+ * Fill lattice with liqud in state of equilibrium
+ */
+void SOLVER_InitLattice(LB_Lattice_p lattice)
+{
+  int i = 0, nodes_num = lattice->countX * lattice->countY * lattice->countZ;
+  solver_vector_p vector = solver_GetVectors(lattice->node_type);
+  
+  for (i = 0; i < nodes_num; ++i)
+  {
+    int j;
+    double *fs_vector = lattice->fs + i * lattice->node_type;
+    LB3D_p u = lattice->velocities + i;
+    
+    u->x = 0;
+    u->y = 0;
+    u->z = 0;
+
+    for (j = 0; j < lattice->node_type; ++j)
+    {
+      fs_vector[j] = vector[j].omega;
+    }
+  }
+}
+
 #define BHK_VAR 0
 
 /*
