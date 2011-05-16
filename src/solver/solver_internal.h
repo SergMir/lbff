@@ -1,6 +1,8 @@
 #ifndef SOLVER_INTERNAL_H
 #define SOLVER_INTERNAL_H
 
+int solver_initOpencl(void);
+
 typedef struct solver_vector_s
 {
   double x;

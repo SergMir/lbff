@@ -36,7 +36,11 @@
  */
 int SOLVER_Init()
 {
-  return 0;
+  int status = 0;
+  
+  //status = solver_initOpencl();
+  
+  return status;
 }
 
 /*

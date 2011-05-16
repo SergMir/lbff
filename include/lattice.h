@@ -37,6 +37,12 @@ typedef struct LB_Node_s
   double viscosity;
 } LB_Node_t;
 
+typedef struct LB_OpenCL_s
+{
+  void *u;
+  void *fs;
+} LB_OpenCL_t, *LB_OpenCL_p;
+
 typedef struct
 {
   LB_Node_t *nodes;
@@ -44,6 +50,7 @@ typedef struct
   double *fs;       /* Particle distribution for -/- */
   LB_lattice_type_t lattice_type;
   LB_node_type_t node_type;
+  LB_OpenCL_p openCLparams;
 
   uint countX;
   uint countY;
