@@ -21,7 +21,7 @@
 
 /* ------------------------------- Defines --------------------------------- */
 
-#define F_COMP(X, Y) (fabs((X) - (Y)) < 0.0000000001)
+#define F_COMP(X, Y) (fabs((X) - (Y)) < 0.00001)
 
 /* -------------------------------- Types ---------------------------------- */
 
@@ -164,12 +164,12 @@ solver_vector_p solver_GetVectors(LB_node_type_t type)
 /*
  * Cosinus of angle between vectors
  */
-double solver_CosAngleBetweenVectors(const LB3D_p v1, const LB3D_p v2)
+lb_float solver_CosAngleBetweenVectors(const LB3D_p v1, const LB3D_p v2)
 {
-  double lv1 = sqrt(v1->x*v1->x + v1->y*v1->y + v1->z*v1->z);
-  double lv2 = sqrt(v2->x*v2->x + v2->y*v2->y + v2->z*v2->z);
-  double l = sqrt(lv1 * lv2);
-  double ab = v1->x*v2->x + v1->y*v2->y + v1->z*v2->z;
+  lb_float lv1 = sqrt(v1->x*v1->x + v1->y*v1->y + v1->z*v1->z);
+  lb_float lv2 = sqrt(v2->x*v2->x + v2->y*v2->y + v2->z*v2->z);
+  lb_float l = sqrt(lv1 * lv2);
+  lb_float ab = v1->x*v2->x + v1->y*v2->y + v1->z*v2->z;
 
   return ab / l;
 }
@@ -225,7 +225,7 @@ int SOLVER_GetNeighborByVector(const LB_Lattice_p lattice, int node, const solve
 /*
  * Scalar multiplication of two 3D vectors
  */
-double solver_scalarVectorMultiply(LB3D_p v1, LB3D_p v2)
+lb_float solver_scalarVectorMultiply(LB3D_p v1, LB3D_p v2)
 {
   return (v1->x * v2->x) + (v1->y * v2->y) + (v1->z * v2->z);
 }
@@ -260,18 +260,18 @@ void SOLVER_InitLattice(LB_Lattice_p lattice)
 /*
  * Calculate feq by Bhatnager, Gross, Krook model
  */
-double solver_feqBHK(LB_Lattice_p lattice, double density, LB3D_p velocity, solver_vector_p vector)
+lb_float solver_feqBHK(LB_Lattice_p lattice, lb_float density, LB3D_p velocity, solver_vector_p vector)
 {
-  double fnew;
+  lb_float fnew;
 
 #if BHK_VAR == 0
-    double c = 1;
-    double teta = c * c / 3;
-    double A = 1;
-    double B = 1 / teta;
-    double C = 1 / (2 * teta * teta);
-    double D = - 1 / (2 * teta);
-    double t;
+    lb_float c = 1;
+    lb_float teta = c * c / 3;
+    lb_float A = 1;
+    lb_float B = 1 / teta;
+    lb_float C = 1 / (2 * teta * teta);
+    lb_float D = - 1 / (2 * teta);
+    lb_float t;
 
     t = solver_scalarVectorMultiply((LB3D_p)vector, velocity);
     fnew = A + B * t + C * t * t + D * solver_scalarVectorMultiply(velocity, velocity);
@@ -286,7 +286,7 @@ double solver_feqBHK(LB_Lattice_p lattice, double density, LB3D_p velocity, solv
 /*
  * Calculate f equilibrium
  */
-double solver_feq(LB_Lattice_p lattice, double density, LB3D_p velocity, solver_vector_p vector)
+lb_float solver_feq(LB_Lattice_p lattice, lb_float density, LB3D_p velocity, solver_vector_p vector)
 {
   return solver_feqBHK(lattice, density, velocity, vector);
 }
@@ -294,13 +294,13 @@ double solver_feq(LB_Lattice_p lattice, double density, LB3D_p velocity, solver_
 /*
  * Calculate with generic LBM
  */
-void solver_ResolveLBGeneric(LB_Lattice_p lattice, EXTOBJ_obj_p objects, int objnum, double dt)
+void solver_ResolveLBGeneric(LB_Lattice_p lattice, EXTOBJ_obj_p objects, int objnum, lb_float dt)
 {
   int i, nodes_cnt = lattice->countX * lattice->countY * lattice->countZ;
   
   
   solver_vector_p vector = solver_GetVectors(lattice->node_type);
-  double tau = 0.7;
+  lb_float tau = 0.7;
   lb_float *fsn = lattice->fs + nodes_cnt * lattice->node_type;
   
   memset(fsn,
@@ -310,7 +310,7 @@ void solver_ResolveLBGeneric(LB_Lattice_p lattice, EXTOBJ_obj_p objects, int obj
   for (i = 0; i < nodes_cnt; ++i)
   {
     LB3D_p u = lattice->velocities + i;
-    double density = 0;
+    lb_float density = 0;
     LB3D_t fe = {0, 0, 0};
     lb_float *fsi = lattice->fs + i * lattice->node_type;
     
@@ -334,8 +334,8 @@ void solver_ResolveLBGeneric(LB_Lattice_p lattice, EXTOBJ_obj_p objects, int obj
 
       if (next_node != -1)
       {
-        double feq = solver_feq(lattice, density, u, vector + k);
-        double delta = (fsi[k] - feq) / tau;
+        lb_float feq = solver_feq(lattice, density, u, vector + k);
+        lb_float delta = (fsi[k] - feq) / tau;
         fsn[next_node * lattice->node_type + k] += fsi[k] - delta;
       }
     }
@@ -377,15 +377,15 @@ void solver_ResolveLBGeneric(LB_Lattice_p lattice, EXTOBJ_obj_p objects, int obj
     
     for (int j = 0; j < forces_num; ++j)
     {
-      double B = 3, mindist = 10e5;
+      lb_float B = 3, mindist = 10e5;
       int k, mini = 0;
-      double density = 0;
+      lb_float density = 0;
 
       for (i = 0; i < nodes_cnt; ++i)
       {
-        double dist = 0;
+        lb_float dist = 0;
         uint xpos, ypos, zpos;
-        double x, y, z;
+        lb_float x, y, z;
 
         BASE_GetPosByIdx(lattice, i, &xpos, &ypos, &zpos);
 
@@ -413,9 +413,9 @@ void solver_ResolveLBGeneric(LB_Lattice_p lattice, EXTOBJ_obj_p objects, int obj
       for (k = 0; k < lattice->node_type; ++k)
       {
 #if 0
-        double ztau = ((2 * tau - 1) / (2 * tau)) * B;
-        double zvm = solver_scalarVectorMultiply((LB3D_p) (vector + k), &(forces[j].vector));
-        double delta = ztau * zvm * 100000.1;
+        lb_float ztau = ((2 * tau - 1) / (2 * tau)) * B;
+        lb_float zvm = solver_scalarVectorMultiply((LB3D_p) (vector + k), &(forces[j].vector));
+        lb_float delta = ztau * zvm * 100000.1;
         if (!F_COMP(delta, 0))
         {
           fsn[mini * lattice->node_type + k] += delta;
@@ -426,7 +426,7 @@ void solver_ResolveLBGeneric(LB_Lattice_p lattice, EXTOBJ_obj_p objects, int obj
           vector[k].y - lattice->velocities[mini].y,
           vector[k].z - lattice->velocities[mini].z
         };
-        double delta = solver_scalarVectorMultiply(&(forces[j].vector), &nvec);
+        lb_float delta = solver_scalarVectorMultiply(&(forces[j].vector), &nvec);
         delta *= solver_feq(lattice, density, &(lattice->velocities[mini]), vector + k);
         fsn[mini * lattice->node_type + k] += delta;
         B= B;
@@ -446,7 +446,7 @@ void solver_ResolveLBGeneric(LB_Lattice_p lattice, EXTOBJ_obj_p objects, int obj
 /*
  * Calculate with own simple non-realistic "physics"
  */
-void solver_ResolveNonPhysical(LB_Lattice_p lattice, EXTOBJ_obj_p objects, int objnum, double dt)
+void solver_ResolveNonPhysical(LB_Lattice_p lattice, EXTOBJ_obj_p objects, int objnum, lb_float dt)
 {
   int i, nodes_cnt = lattice->countX * lattice->countY * lattice->countZ;
   static EXTOBJ_force_t forces[1000];
@@ -456,7 +456,7 @@ void solver_ResolveNonPhysical(LB_Lattice_p lattice, EXTOBJ_obj_p objects, int o
     uint xpos, ypos, zpos;
     int k = 0, forces_num = objects[0].recalculate_force(&(objects[0]), NULL, 0, forces);
     solver_vector_p current_vector = solver_GetVectors(lattice->node_type);
-    double x, y, z;
+    lb_float x, y, z;
 
     BASE_GetPosByIdx(lattice, i, &xpos, &ypos, &zpos);
     
@@ -468,12 +468,12 @@ void solver_ResolveNonPhysical(LB_Lattice_p lattice, EXTOBJ_obj_p objects, int o
     for (; k < lattice->node_type; ++k, current_vector += 3)
     {
       int j = 0;
-      double delta;
+      lb_float delta;
       
       for (; j < forces_num; ++j)
       {
-        double cosfi = solver_CosAngleBetweenVectors((LB3D_p)current_vector, &(forces[j].vector));
-        double dist = 0;
+        lb_float cosfi = solver_CosAngleBetweenVectors((LB3D_p)current_vector, &(forces[j].vector));
+        lb_float dist = 0;
 
         dist += (forces[j].points.x - x) * (forces[j].points.x - x);
         dist += (forces[j].points.y - y) * (forces[j].points.y - y);
@@ -482,7 +482,7 @@ void solver_ResolveNonPhysical(LB_Lattice_p lattice, EXTOBJ_obj_p objects, int o
 
         if (cosfi > 0)
         {
-          double delta_force = 0.05 * forces[j].force * cosfi / (lattice->nodes[i].density * dist);
+          lb_float delta_force = 0.05 * forces[j].force * cosfi / (lattice->nodes[i].density * dist);
           lattice->velocities[i * lattice->node_type + k].x += max(delta_force, 0);
         }
 
@@ -503,7 +503,7 @@ void solver_ResolveNonPhysical(LB_Lattice_p lattice, EXTOBJ_obj_p objects, int o
 /*
  * Calculate lattice parameters with time delta = dt
  */
-void SOLVER_Resolve(LB_Lattice_p lattice, EXTOBJ_obj_p objects, int objnum, double dt)
+void SOLVER_Resolve(LB_Lattice_p lattice, EXTOBJ_obj_p objects, int objnum, lb_float dt)
 {
   //solver_ResolveNonPhysical(lattice, objects, objnum, dt);
   solver_ResolveLBGeneric(lattice, objects, objnum, dt);

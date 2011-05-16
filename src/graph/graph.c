@@ -66,8 +66,8 @@ void GRAPH_Redraw(const LB_Lattice_p lattice, const EXTOBJ_obj_p objects, uint o
 {
   uint i, nodes_cnt = lattice->countX * lattice->countY * lattice->countZ;
   LB3D_p ch_vector = lattice->velocities;
-  double minv = 1000000, maxv = 0, avgv = 0;
-  static double new_max = 0;
+  lb_float minv = 1000000, maxv = 0, avgv = 0;
+  static lb_float new_max = 0;
 
   glClear(GL_COLOR_BUFFER_BIT);
 
@@ -83,10 +83,10 @@ void GRAPH_Redraw(const LB_Lattice_p lattice, const EXTOBJ_obj_p objects, uint o
 
   for (i = 0; i < nodes_cnt; ++i)
   {
-    double x, y, z;
-    double rel_velocity, v_sum = 0;
+    lb_float x, y, z;
+    lb_float rel_velocity, v_sum = 0;
     uint xpos, ypos, zpos;
-    float red, blue;
+    lb_float red, blue;
 
     BASE_GetPosByIdx(lattice, i, &xpos, &ypos, &zpos);
     
@@ -110,10 +110,10 @@ void GRAPH_Redraw(const LB_Lattice_p lattice, const EXTOBJ_obj_p objects, uint o
     glColor3f(red, 0.0f, blue);
     glVertex2f(x, y);
   #if defined(RERP_VECTORS)
-    double d = rel_velocity;
-    double dx = lattice->velocities[i].x > 0 ? d : -d;
+    lb_float d = rel_velocity;
+    lb_float dx = lattice->velocities[i].x > 0 ? d : -d;
     dx *= lattice->sizeX / lattice->countX;
-    double dy = lattice->velocities[i].y > 0 ? d : -d;
+    lb_float dy = lattice->velocities[i].y > 0 ? d : -d;
     dy *= lattice->sizeY / lattice->countY;
     glVertex2f(x + dx, y + dy);
   #endif

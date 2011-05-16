@@ -40,7 +40,7 @@ int flag_stop = 0;
  */
 void mainLoop()
 {
-  double time_start, time_stop, dt = 0.1;
+  lb_float time_start, time_stop, dt = 0.1;
 
   time_start = time(NULL);
 

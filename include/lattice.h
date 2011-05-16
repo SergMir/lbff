@@ -3,8 +3,7 @@
 
 #include <sys/types.h>
 
-//typedef float lb_float;
-typedef double lb_float;
+typedef float lb_float;
 
 typedef struct LB3D_s
 {
@@ -36,8 +35,8 @@ typedef enum
 
 typedef struct LB_Node_s
 {
-  double density;
-  double viscosity;
+  lb_float density;
+  lb_float viscosity;
 } LB_Node_t;
 
 typedef struct LB_OpenCL_s
@@ -61,9 +60,9 @@ typedef struct
   uint countY;
   uint countZ;
 
-  double sizeX;
-  double sizeY;
-  double sizeZ;
+  lb_float sizeX;
+  lb_float sizeY;
+  lb_float sizeZ;
 
 } LB_Lattice_t, *LB_Lattice_p;
 

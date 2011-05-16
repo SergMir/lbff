@@ -63,7 +63,7 @@ void BASE_GetPosByIdx(const LB_Lattice_p lattice, int index, uint *x, uint *y, u
 /*
  * Move objects on xyz deltas
  */
-void BASE_MoveObjects(double dx, double dy, double dz)
+void BASE_MoveObjects(lb_float dx, lb_float dy, lb_float dz)
 {
   int i = 0, j = 0;
 
@@ -84,7 +84,7 @@ void BASE_MoveObjects(double dx, double dy, double dz)
 LB_Lattice_t* LB_CreateLattice(LB_lattice_type_t lattice_type,
                                LB_node_type_t node_type,
                                uint countX, uint countY, uint countZ,
-                               double sizeX, double sizeY, double sizeZ)
+                               lb_float sizeX, lb_float sizeY, lb_float sizeZ)
 {
   LB_Lattice_t *lattice = (LB_Lattice_t *)malloc(sizeof(LB_Lattice_t));
   int nodes_num = countX * countY * countZ;

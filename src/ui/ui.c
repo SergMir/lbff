@@ -56,7 +56,7 @@ void UI_KeyboardHandler(unsigned char key, int x, int y)
  */
 void UI_SpecKeyboardHandler(int key, int x, int y)
 {
-  double dx, dy;
+  lb_float dx, dy;
 
   switch (key)
   {

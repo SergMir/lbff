@@ -5,7 +5,7 @@ typedef struct
 {
   LB3D_t points;
   LB3D_t vector;
-  double  force;
+  lb_float  force;
 } EXTOBJ_force_t;
 
 typedef enum
