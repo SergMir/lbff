@@ -3,11 +3,14 @@
 
 #include <sys/types.h>
 
+//typedef float lb_float;
+typedef double lb_float;
+
 typedef struct LB3D_s
 {
-  double x;
-  double y;
-  double z;
+  lb_float x;
+  lb_float y;
+  lb_float z;
 } LB3D_t, *LB3D_p;
 
 typedef enum
@@ -41,13 +44,15 @@ typedef struct LB_OpenCL_s
 {
   void *u;
   void *fs;
+  void *fsnew;
+  void *vectors;
 } LB_OpenCL_t, *LB_OpenCL_p;
 
 typedef struct
 {
   LB_Node_t *nodes;
   LB3D_p velocities;  /* Velocities for each characteristic vector for each node */
-  double *fs;       /* Particle distribution for -/- */
+  lb_float *fs;       /* Particle distribution for -/- */
   LB_lattice_type_t lattice_type;
   LB_node_type_t node_type;
   LB_OpenCL_p openCLparams;

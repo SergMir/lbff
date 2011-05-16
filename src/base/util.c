@@ -102,7 +102,7 @@ LB_Lattice_t* LB_CreateLattice(LB_lattice_type_t lattice_type,
 
   lattice->nodes   =      (LB_Node_t*)malloc(sizeof(LB_Node_t) * nodes_num);
   lattice->velocities =   (LB3D_p)malloc(nodes_num * sizeof(LB3D_t));
-  lattice->fs =           (double *)malloc(2 * sizeof(double) * nodes_num * node_type);
+  lattice->fs =           (lb_float *)malloc(2 * sizeof(lb_float) * nodes_num * node_type);
   lattice->openCLparams =  NULL;
 
   SOLVER_InitLattice(lattice);

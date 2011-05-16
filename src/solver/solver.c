@@ -31,6 +31,89 @@
 
 /* --------------------------- Implementation ------------------------------ */
 
+solver_vector_t solver_vectors_D2_Q5[] =
+{
+  { 0.0,  0.0,  0.0, 2.0 / 6.0},
+
+  { 1.0,  0.0,  0.0, 1.0 / 6.0},
+  { 0.0,  1.0,  0.0, 1.0 / 6.0},
+  {-1.0,  0.0,  0.0, 1.0 / 6.0},
+  { 0.0, -1.0,  0.0, 1.0 / 6.0}
+};
+
+solver_vector_t solver_vectors_D2_Q9[] =
+{
+  { 0.0,  0.0,  0.0, 4.0 / 9.0},
+
+  { 1.0,  0.0,  0.0, 1.0 / 9.0},
+  { 0.0,  1.0,  0.0, 1.0 / 9.0},
+  {-1.0,  0.0,  0.0, 1.0 / 9.0},
+  { 0.0, -1.0,  0.0, 1.0 / 9.0},
+
+  { 1.0,  1.0,  0.0, 1.0 / 36.0},
+  {-1.0,  1.0,  0.0, 1.0 / 36.0},
+  {-1.0, -1.0,  0.0, 1.0 / 36.0},
+  { 1.0, -1.0,  0.0, 1.0 / 36.0}
+};
+
+solver_vector_t solver_vectors_D3_Q7[] =
+{
+  { 0.0,  0.0,  0.0, 3.0 / 9.0},
+
+  { 1.0,  0.0,  0.0, 1.0 / 9.0},
+  { 0.0,  1.0,  0.0, 1.0 / 9.0},
+  {-1.0,  0.0,  0.0, 1.0 / 9.0},
+  { 0.0, -1.0,  0.0, 1.0 / 9.0},
+  { 0.0,  0.0,  1.0, 1.0 / 9.0},
+  { 0.0,  0.0, -1.0, 1.0 / 9.0},
+};
+
+solver_vector_t solver_vectors_D3_Q15[] =
+{
+  { 0.0,  0.0,  0.0, 2.0 / 9.0},
+
+  { 1.0,  0.0,  0.0, 1.0 / 9.0},
+  { 0.0,  1.0,  0.0, 1.0 / 9.0},
+  {-1.0,  0.0,  0.0, 1.0 / 9.0},
+  { 0.0, -1.0,  0.0, 1.0 / 9.0},
+  { 0.0,  0.0,  1.0, 1.0 / 9.0},
+  { 0.0,  0.0, -1.0, 1.0 / 9.0},
+  
+  { 1.0,  1.0,  1.0, 1.0 / 72.0},
+  { 1.0,  1.0, -1.0, 1.0 / 72.0},
+  {-1.0,  1.0,  1.0, 1.0 / 72.0},
+  {-1.0,  1.0, -1.0, 1.0 / 72.0},
+  {-1.0, -1.0,  1.0, 1.0 / 72.0},
+  {-1.0, -1.0, -1.0, 1.0 / 72.0},
+  { 1.0, -1.0,  1.0, 1.0 / 72.0},
+  { 1.0, -1.0, -1.0, 1.0 / 72.0},
+};
+
+solver_vector_t solver_vectors_D3_Q19[] =
+{
+  { 0.0,  0.0,  0.0, 1.0 /3.0},
+
+  { 1.0,  0.0,  0.0, 1.0 / 18.0},
+  { 0.0,  1.0,  0.0, 1.0 / 18.0},
+  {-1.0,  0.0,  0.0, 1.0 / 18.0},
+  { 0.0, -1.0,  0.0, 1.0 / 18.0},
+  { 0.0,  0.0,  1.0, 1.0 / 18.0},
+  { 0.0,  0.0, -1.0, 1.0 / 18.0},
+  
+  { 1.0,  1.0,  0.0, 1.0 / 36.0},
+  {-1.0,  1.0,  0.0, 1.0 / 36.0},
+  {-1.0, -1.0,  0.0, 1.0 / 36.0},
+  { 1.0, -1.0,  0.0, 1.0 / 36.0},
+  { 0.0,  1.0,  1.0, 1.0 / 36.0},
+  { 0.0, -1.0,  1.0, 1.0 / 36.0},
+  { 0.0, -1.0, -1.0, 1.0 / 36.0},
+  { 0.0,  1.0, -1.0, 1.0 / 36.0},
+  { 1.0,  0.0,  1.0, 1.0 / 36.0},
+  { 1.0,  0.0, -1.0, 1.0 / 36.0},
+  {-1.0,  0.0, -1.0, 1.0 / 36.0},
+  {-1.0,  0.0,  1.0, 1.0 / 36.0},
+};
+
 /*
  *
  */
@@ -38,7 +121,11 @@ int SOLVER_Init()
 {
   int status = 0;
   
-  //status = solver_initOpencl();
+  status = solver_initOpencl();
+  if (status != 0)
+  {
+    exit(-1);
+  }
   
   return status;
 }
@@ -154,7 +241,7 @@ void SOLVER_InitLattice(LB_Lattice_p lattice)
   for (i = 0; i < nodes_num; ++i)
   {
     int j;
-    double *fs_vector = lattice->fs + i * lattice->node_type;
+    lb_float *fs_vector = lattice->fs + i * lattice->node_type;
     LB3D_p u = lattice->velocities + i;
     
     u->x = 0;
@@ -214,24 +301,24 @@ void solver_ResolveLBGeneric(LB_Lattice_p lattice, EXTOBJ_obj_p objects, int obj
   
   solver_vector_p vector = solver_GetVectors(lattice->node_type);
   double tau = 0.7;
-  double *fsn = lattice->fs + nodes_cnt * lattice->node_type;
+  lb_float *fsn = lattice->fs + nodes_cnt * lattice->node_type;
   
   memset(fsn,
          0,
-         sizeof(double) * nodes_cnt * lattice->node_type);
+         sizeof(lb_float) * nodes_cnt * lattice->node_type);
 
   for (i = 0; i < nodes_cnt; ++i)
   {
     LB3D_p u = lattice->velocities + i;
     double density = 0;
     LB3D_t fe = {0, 0, 0};
-    double *fsi = lattice->fs + i * lattice->node_type;
+    lb_float *fsi = lattice->fs + i * lattice->node_type;
     
     int k = 0;
 
     for (k = 0; k < lattice->node_type; ++k)
     {
-      double fs = fsi[k];
+      lb_float fs = fsi[k];
       density += fs;
       fe.x += fs * vector[k].x;
       fe.y += fs * vector[k].y;
@@ -319,7 +406,7 @@ void solver_ResolveLBGeneric(LB_Lattice_p lattice, EXTOBJ_obj_p objects, int obj
 
       for (k = 0; k < lattice->node_type; ++k)
       {
-        double fs = fsn[mini * lattice->node_type + k];
+        lb_float fs = fsn[mini * lattice->node_type + k];
         density += fs;
       }
 
@@ -348,7 +435,7 @@ void solver_ResolveLBGeneric(LB_Lattice_p lattice, EXTOBJ_obj_p objects, int obj
     }
   }
   
-  memcpy(lattice->fs, lattice->fs + nodes_cnt * lattice->node_type, sizeof(double) * nodes_cnt * lattice->node_type);
+  memcpy(lattice->fs, lattice->fs + nodes_cnt * lattice->node_type, sizeof(lb_float) * nodes_cnt * lattice->node_type);
 
   lattice = lattice;
   objects = objects;
