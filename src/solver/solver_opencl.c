@@ -16,6 +16,47 @@
     }
 
 const char *sourceLB_BHK =
+  "void getpos(int *sizes, int node, int *pos)                               \n"
+  "{                                                                         \n"
+  "}                                                                         \n"
+  "                                                                          \n"
+  "int nei(int *sizes, int node, float *vector)                              \n"
+  "{                                                                         \n"
+  "  int dx = fabs(vector[0]) > 0.577 ? 1 : 0;                               \n"
+  "  int dy = fabs(vector[1]) > 0.577 ? 1 : 0;                               \n"
+  "  int dz = fabs(vector[2]) > 0.577 ? 1 : 0;                               \n"
+  "  return 0;                                                               \n"
+  "}                                                                         \n"
+  "                                                                          \n"
+  "                                                                          \n"
+  "                                                                          \n"
+  "                                                                          \n"
+  "                                                                          \n"
+  "                                                                          \n"
+  "                                                                          \n"
+  "                                                                          \n"
+  "                                                                          \n"
+  "                                                                          \n"
+  "                                                                          \n"
+  "                                                                          \n"
+  "                                                                          \n"
+  "                                                                          \n"
+  "                                                                          \n"
+  "                                                                          \n"
+  "float vec_mul(float *v1, float *v2)                                       \n"
+  "{                                                                         \n"
+  "  return v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2];                         \n"
+  "}                                                                         \n"
+  "                                                                          \n"
+  "float feqBHK(float density, float *u, float *vector, int vec_cnt)         \n"
+  "{                                                                         \n"
+  "  float t = vec_mul(vector, u);                                           \n"
+  "  float fnew = 1 + 3 * t + 4.5 * t * t - 1.5 * vec_mul(u, u);             \n"
+  "  fnew *= vector[3] * density;                                            \n"
+  "  return fnew;                                                            \n"
+  "}                                                                         \n"
+  "                                                                          \n"
+  "                                                                          \n"
   "__kernel void lb_bhk(__global float *us,                                  \n"
   "                     const __global float *fs,                            \n"
   "                     __global float *fsn,                                 \n"
@@ -163,6 +204,15 @@ int solver_initOpencl(void)
     solver_breakIfFailed;
 
     status = clBuildProgram(program_lb_bhk, 1, &device, NULL, NULL, NULL);
+    if (CL_SUCCESS != status)
+    {
+      char *build_log;
+      size_t ret_val_size;
+      clGetProgramBuildInfo(program_lb_bhk, device, CL_PROGRAM_BUILD_LOG, 0, NULL, &ret_val_size);
+      build_log = new char[ret_val_size + 1];
+      clGetProgramBuildInfo(program_lb_bhk, device, CL_PROGRAM_BUILD_LOG, ret_val_size, build_log, NULL);
+      printf("%s", build_log);
+    }
     solver_breakIfFailed;
 
     kernel_lb_bhk = clCreateKernel(program_lb_bhk, "lb_bhk",
@@ -170,6 +220,6 @@ int solver_initOpencl(void)
     solver_breakIfFailed;
   }
   while (0);
-
+  
   return (CL_SUCCESS == status) ? 0 : -1;
 }

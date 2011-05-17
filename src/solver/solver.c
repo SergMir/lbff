@@ -235,7 +235,6 @@ lb_float solver_scalarVectorMultiply(LB3D_p v1, LB3D_p v2)
  */
 void SOLVER_InitLattice(LB_Lattice_p lattice)
 {
-#if 0
   int i = 0, nodes_num = lattice->countX * lattice->countY * lattice->countZ;
   solver_vector_p vector = solver_GetVectors(lattice->node_type);
   
@@ -254,9 +253,6 @@ void SOLVER_InitLattice(LB_Lattice_p lattice)
       fs_vector[j] = vector[j].omega;
     }
   }
-#else
-  solver_ResolveOpencl(lattice);
-#endif
 }
 
 #define BHK_VAR 0
