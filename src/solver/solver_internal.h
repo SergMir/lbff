@@ -12,6 +12,8 @@ typedef struct solver_vector_s
 } solver_vector_t, *solver_vector_p;
 
 solver_vector_p solver_GetVectors(LB_node_type_t type);
+
+int solver_ResolveOpencl(LB_Lattice_p lattice);
         
 #endif /* SOLVER_INTERNAL_H */
 
