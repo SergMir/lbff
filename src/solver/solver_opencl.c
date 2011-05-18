@@ -9,9 +9,10 @@
 #include <solver.h>
 #include "solver_internal.h"
 
-#define solver_breakIfFailed \
+#define solver_breakIfFailed(msg, code) \
     if (CL_SUCCESS != status) \
     { \
+      printf("[ERROR][%s : %s : %d] %s | error code : (%d)\n", __FILE__, __FUNCTION__, __LINE__, (msg), (code)); \
       break; \
     }
 
@@ -28,7 +29,7 @@ const char *sourceLB_BHK =
   "                                                                          \n"
   "int nei(int *sizes, int node, float *vector)                              \n"
   "{                                                                         \n"
-  "  float min1 = 0.577f;                                                     \n"
+  "  float min1 = 0.577f;                                                    \n"
   "  int dx = fabs(vector[0]) > min1  ? 1 : 0;                               \n"
   "  int dy = fabs(vector[1]) > min1  ? 1 : 0;                               \n"
   "  int dz = fabs(vector[2]) > min1  ? 1 : 0;                               \n"
@@ -90,7 +91,7 @@ const char *sourceLB_BHK =
   "                     const  int sizeY,                                    \n"
   "                     const  int sizeZ)                                    \n"
   "{                                                                         \n"
-  "  float tau = 0.7f;                                                       \n"
+  "  float tau = 0.55f;                                                      \n"
   "  int i = get_global_id(0);                                               \n"
   "  {                                                                       \n"
   "    float density = 0, fe[3] = {0, 0, 0};                                 \n"
@@ -115,7 +116,7 @@ const char *sourceLB_BHK =
   "        vectors[k * 4 + 0],                                               \n"
   "        vectors[k * 4 + 1],                                               \n"
   "        vectors[k * 4 + 2],                                               \n"
-  "        vectors[k * 4 + 3 ],                                               \n"
+  "        vectors[k * 4 + 3],                                               \n"
   "      };                                                                  \n"
   "      float nu[3] = {                                                     \n"
   "        us[i * 3 + 0],                                                    \n"
@@ -134,7 +135,6 @@ const char *sourceLB_BHK =
   "    }                                                                     \n"
   "  }                                                                       \n"
   "} \n";
-  //"                                                                          \n";
 
 cl_platform_id platform;
 cl_device_id device;
@@ -151,17 +151,15 @@ int solver_ResolveOpencl(LB_Lattice_p lattice)
   int fs_size = nodes_cnt * lattice->node_type;
   cl_command_queue queue;
   solver_vector_p vector = solver_GetVectors(lattice->node_type);
-  cl_int status = CL_SUCCESS;
-  
-  queue = clCreateCommandQueue(context,
-                               device,
-                               0, &status);
-  if (CL_SUCCESS != status) { exit(-1); }
-  
-  if (NULL == lattice->openCLparams)
+  cl_int status;
+
+  do
   {
-    memset(lattice->fs + fs_size, 0, sizeof (lb_float) * fs_size);
-    do
+    queue = clCreateCommandQueue(context,
+                                 device,
+                                 0, &status);
+
+    if (NULL == lattice->openCLparams)
     {
       lattice->openCLparams = (LB_OpenCL_p) malloc(sizeof (LB_OpenCL_t));
 
@@ -170,68 +168,62 @@ int solver_ResolveOpencl(LB_Lattice_p lattice)
                                                 nodes_cnt * sizeof (LB3D_t),
                                                 lattice->velocities,
                                                 &status);
-      solver_breakIfFailed;
-      
+      solver_breakIfFailed("Create velocities buffer", status);
+
       lattice->openCLparams->fs = clCreateBuffer(context,
                                                  CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
                                                  sizeof (lb_float) * fs_size,
                                                  lattice->fs,
                                                  &status);
-      solver_breakIfFailed;
+      solver_breakIfFailed("Create fs buffer", status);
 
       lattice->openCLparams->fsnew = clCreateBuffer(context,
                                                     CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR,
                                                     sizeof (lb_float) * fs_size,
                                                     lattice->fs + fs_size,
                                                     &status);
-      solver_breakIfFailed;
-      
+      solver_breakIfFailed("Create fs* buffer", status);
+
       lattice->openCLparams->vectors = clCreateBuffer(context,
                                                       CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
                                                       sizeof (lb_float) * lattice->node_type,
                                                       vector,
                                                       &status);
-      solver_breakIfFailed;
-      
-      
-    } while (0);
-  }
-  
-  
-  if (CL_SUCCESS == status)
-  {
+      solver_breakIfFailed("Create vectors buffer", status);
+    }
+
+
     global_work_size = nodes_cnt;
-    clSetKernelArg(kernel_lb_bhk, 0, sizeof(cl_mem), (void*) &(lattice->openCLparams->u));
-    clSetKernelArg(kernel_lb_bhk, 1, sizeof(cl_mem), (void*) &(lattice->openCLparams->fs));
-    clSetKernelArg(kernel_lb_bhk, 2, sizeof(cl_mem), (void*) &(lattice->openCLparams->fsnew));
-    clSetKernelArg(kernel_lb_bhk, 3, sizeof(cl_mem), (void*) &(lattice->openCLparams->vectors));
-    clSetKernelArg(kernel_lb_bhk, 4, sizeof(int),    (void*) &nodes_cnt);
-    clSetKernelArg(kernel_lb_bhk, 5, sizeof(int),    (void*) &(lattice->node_type));
-    clSetKernelArg(kernel_lb_bhk, 6, sizeof(int),    (void*) &(lattice->countX));
-    clSetKernelArg(kernel_lb_bhk, 7, sizeof(int),    (void*) &(lattice->countY));
-    clSetKernelArg(kernel_lb_bhk, 8, sizeof(int),    (void*) &(lattice->countZ));
+    clSetKernelArg(kernel_lb_bhk, 0, sizeof (cl_mem), (void*) &(lattice->openCLparams->u));
+    clSetKernelArg(kernel_lb_bhk, 1, sizeof (cl_mem), (void*) &(lattice->openCLparams->fs));
+    clSetKernelArg(kernel_lb_bhk, 2, sizeof (cl_mem), (void*) &(lattice->openCLparams->fsnew));
+    clSetKernelArg(kernel_lb_bhk, 3, sizeof (cl_mem), (void*) &(lattice->openCLparams->vectors));
+    clSetKernelArg(kernel_lb_bhk, 4, sizeof (int), (void*) &nodes_cnt);
+    clSetKernelArg(kernel_lb_bhk, 5, sizeof (int), (void*) &(lattice->node_type));
+    clSetKernelArg(kernel_lb_bhk, 6, sizeof (int), (void*) &(lattice->countX));
+    clSetKernelArg(kernel_lb_bhk, 7, sizeof (int), (void*) &(lattice->countY));
+    clSetKernelArg(kernel_lb_bhk, 8, sizeof (int), (void*) &(lattice->countZ));
     status = clEnqueueNDRangeKernel(queue,
-                           kernel_lb_bhk,
-                           1,
-                           NULL,
-                           &global_work_size,
-                           NULL, 0, NULL,
-                           NULL);
+                                    kernel_lb_bhk,
+                                    1,
+                                    NULL,
+                                    &global_work_size,
+                                    NULL, 0, NULL,
+                                    NULL);
+    solver_breakIfFailed("clEnqueueNDRangeKernel", status);
     clFinish(queue);
 
     status = clEnqueueReadBuffer(queue,
-                                (cl_mem)lattice->openCLparams->fsnew,
+                                 (cl_mem) lattice->openCLparams->fsnew,
                                  CL_TRUE,
                                  0,
                                  sizeof (lb_float) * fs_size,
                                  lattice->fs + fs_size,
                                  0, NULL, NULL);
-  }
+    solver_breakIfFailed("clEnqueueReadBuffer", status);
+    clReleaseCommandQueue(queue);
+  } while (0);
   
-  if (CL_SUCCESS != status)
-  {
-    exit(-1);
-  }
   return (CL_SUCCESS == status) ? 0 : -1;
 }
 
@@ -243,14 +235,14 @@ int solver_initOpencl(void)
   {
     /* 1. Get a platform */
     status = clGetPlatformIDs(1, &platform, NULL);
-    solver_breakIfFailed;
+    solver_breakIfFailed("clGetPlatformIDs", status);
 
     /* 2. Find a gpu device */
     status = clGetDeviceIDs(platform, CL_DEVICE_TYPE_CPU,
                             1,
                             &device,
                             NULL);
-    solver_breakIfFailed;
+    solver_breakIfFailed("clGetDeviceIDs", status);
 
     /* 3. Create a context on that device */
     context = clCreateContext(NULL,
@@ -258,14 +250,14 @@ int solver_initOpencl(void)
                               &device,
                               NULL, NULL,
                               &status);
-    solver_breakIfFailed;
+    solver_breakIfFailed("clCreateContext", status);
 
     program_lb_bhk = clCreateProgramWithSource(context,
                                                1,
                                                &sourceLB_BHK,
                                                NULL,
                                                &status);
-    solver_breakIfFailed;
+    solver_breakIfFailed("clCreateProgramWithSource", status);
 
     status = clBuildProgram(program_lb_bhk, 1, &device, NULL, NULL, NULL);
     if (CL_SUCCESS != status)
@@ -277,11 +269,11 @@ int solver_initOpencl(void)
       clGetProgramBuildInfo(program_lb_bhk, device, CL_PROGRAM_BUILD_LOG, ret_val_size, build_log, NULL);
       printf("%s", build_log);
     }
-    solver_breakIfFailed;
+    solver_breakIfFailed("clBuildProgram", status);
 
     kernel_lb_bhk = clCreateKernel(program_lb_bhk, "lb_bhk",
                                    &status);
-    solver_breakIfFailed;
+    solver_breakIfFailed("clCreateKernel", status);
   }
   while (0);
   

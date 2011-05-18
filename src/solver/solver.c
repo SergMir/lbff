@@ -308,7 +308,7 @@ void solver_ResolveLBGeneric(LB_Lattice_p lattice, EXTOBJ_obj_p objects, int obj
          sizeof(lb_float) * nodes_cnt * lattice->node_type);
   tau = tau;
 
-#if 1
+#if 0
   for (i = 0; i < nodes_cnt; ++i)
   {
     LB3D_p u = lattice->velocities + i;
