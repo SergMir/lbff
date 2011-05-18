@@ -20,4 +20,6 @@ $(SRC_SUBDIRS):
 clean:
 	$(ECHO) rm -rf $(OBJECTS_PATH)
 	$(ECHO) rm -f lbff
+	$(ECHO) rm -f *.tmp
+	$(ECHO) rm -f *.tmp.dll
 
