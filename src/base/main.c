@@ -15,7 +15,7 @@
 #include <ui.h>
 
 #include <stdlib.h>
-#include <time.h>
+#include <stdio.h>
 #include <GL/glut.h>
 #include <unistd.h>
 
@@ -35,20 +35,31 @@ int flag_stop = 0;
 
 /* --------------------------- Implementation ------------------------------ */
 
+
+
 /*
  * Fluid recalculation and redraw
  */
 void mainLoop()
 {
-  lb_float time_start, time_stop, dt = 0.1;
-
-  time_start = time(NULL);
-
+  lb_float dt = 0.1, dt_resolved, dt_rendered;
+  long time_start, time_resolved, time_rendered;
+  
+  
+  time_start = BASE_GetTimeNs();
+  
   SOLVER_Resolve(lattice, objects, 1, dt);
+  
+  time_resolved = BASE_GetTimeNs();
+  
   GRAPH_Redraw(lattice, objects, 1);
+  
+  time_rendered = BASE_GetTimeNs();
 
-  time_stop = time(NULL);
-  dt = time_stop - time_start;
+  dt_resolved = BASE_GetTimeMs(time_start, time_resolved);
+  dt_rendered = BASE_GetTimeMs(time_resolved, time_rendered);
+  dt = dt_resolved + dt_rendered;
+  printf("Calculation: %f ms; Rendering: %f ms; Summary: %f ms\n", dt_resolved, dt_rendered, dt);
 
   if (flag_stop)
   {

@@ -12,6 +12,7 @@
 #include <solver.h>
 
 #include <stdlib.h>
+#include <time.h>
 
 /* ------------------------------- Defines --------------------------------- */
 
@@ -108,4 +109,16 @@ LB_Lattice_t* LB_CreateLattice(LB_lattice_type_t lattice_type,
   SOLVER_InitLattice(lattice);
 
   return lattice;
+}
+
+long BASE_GetTimeNs(void)
+{
+  struct timespec tp;
+  clock_gettime (CLOCK_REALTIME, &tp);
+  return tp.tv_sec * 1000000000 + tp.tv_nsec;
+}
+
+lb_float BASE_GetTimeMs(long time_start, long time_stop)
+{
+  return (time_stop - time_start) / 1000000.0;
 }
