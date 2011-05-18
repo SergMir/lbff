@@ -300,7 +300,7 @@ void solver_ResolveLBGeneric(LB_Lattice_p lattice, EXTOBJ_obj_p objects, int obj
   
   
   solver_vector_p vector = solver_GetVectors(lattice->node_type);
-  lb_float tau = 0.7;
+  lb_float tau = 0.55;
   lb_float *fsn = lattice->fs + nodes_cnt * lattice->node_type;
   
   memset(fsn,
@@ -338,22 +338,9 @@ void solver_ResolveLBGeneric(LB_Lattice_p lattice, EXTOBJ_obj_p objects, int obj
       {
         lb_float feq = solver_feq(lattice, density, u, vector + k);
         lb_float delta = (fsi[k] - feq) / tau;
-        fsn[next_node * lattice->node_type + k] = fsi[k] - delta;
+        fsn[next_node * lattice->node_type + k] += fsi[k] - delta;
       }
-    }
-  }
-#else
-  solver_ResolveOpencl(lattice);
-#endif
-  
-  for (i = 0; i < nodes_cnt; ++i)
-  {
-    int k;
-    for (k = 0; k < lattice->node_type; ++k)
-    {
-      int next_node = SOLVER_GetNeighborByVector(lattice, i, vector + k);
-
-      if (next_node == -1)
+      else
       {
         int opp_k;
         solver_vector_p opp_vector = solver_GetVectors(lattice->node_type);
@@ -369,11 +356,14 @@ void solver_ResolveLBGeneric(LB_Lattice_p lattice, EXTOBJ_obj_p objects, int obj
         }
         if (opp_k < lattice->node_type)
         {
-          fsn[i * lattice->node_type + opp_k] += lattice->fs[i * lattice->node_type + k];
+          fsn[i * lattice->node_type + opp_k] += fsi[k];
         }
       }
     }
   }
+#else
+  solver_ResolveOpencl(lattice);
+#endif
   
   for (int obj = 0; obj < objnum; ++obj)
   {
