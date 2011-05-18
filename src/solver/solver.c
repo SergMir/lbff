@@ -306,7 +306,9 @@ void solver_ResolveLBGeneric(LB_Lattice_p lattice, EXTOBJ_obj_p objects, int obj
   memset(fsn,
          0,
          sizeof(lb_float) * nodes_cnt * lattice->node_type);
+  tau = tau;
 
+#if 1
   for (i = 0; i < nodes_cnt; ++i)
   {
     LB3D_p u = lattice->velocities + i;
@@ -336,10 +338,13 @@ void solver_ResolveLBGeneric(LB_Lattice_p lattice, EXTOBJ_obj_p objects, int obj
       {
         lb_float feq = solver_feq(lattice, density, u, vector + k);
         lb_float delta = (fsi[k] - feq) / tau;
-        fsn[next_node * lattice->node_type + k] += fsi[k] - delta;
+        fsn[next_node * lattice->node_type + k] = fsi[k] - delta;
       }
     }
   }
+#else
+  solver_ResolveOpencl(lattice);
+#endif
   
   for (i = 0; i < nodes_cnt; ++i)
   {
