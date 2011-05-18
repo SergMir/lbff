@@ -25,6 +25,12 @@
 
 /* -------------------------------- Types ---------------------------------- */
 
+typedef struct
+{
+  EXTOBJ_force_t forces[100];
+  int forces_num;
+} force_pack_t;
+
 /* --------------------------- Local Routines ------------------------------ */
 
 /* ------------------------------- Globals --------------------------------- */
@@ -297,6 +303,7 @@ lb_float solver_feq(LB_Lattice_p lattice, lb_float density, LB3D_p velocity, sol
 void solver_ResolveLBGeneric(LB_Lattice_p lattice, EXTOBJ_obj_p objects, int objnum, lb_float dt)
 {
   int i, nodes_cnt = lattice->countX * lattice->countY * lattice->countZ;
+  static force_pack_t forces[100];
   
   
   solver_vector_p vector = solver_GetVectors(lattice->node_type);
@@ -307,15 +314,19 @@ void solver_ResolveLBGeneric(LB_Lattice_p lattice, EXTOBJ_obj_p objects, int obj
          0,
          sizeof(lb_float) * nodes_cnt * lattice->node_type);
   tau = tau;
+  
+  for (int obj = 0; obj < objnum; ++obj)
+  {
+    forces[obj].forces_num = objects[obj].recalculate_force(&(objects[obj]), NULL, 0, forces[obj].forces);
+  }
 
-#if 0
+#if 1
   for (i = 0; i < nodes_cnt; ++i)
   {
     LB3D_p u = lattice->velocities + i;
     lb_float density = 0;
     LB3D_t fe = {0, 0, 0};
     lb_float *fsi = lattice->fs + i * lattice->node_type;
-    
     int k = 0;
 
     for (k = 0; k < lattice->node_type; ++k)
@@ -329,6 +340,55 @@ void solver_ResolveLBGeneric(LB_Lattice_p lattice, EXTOBJ_obj_p objects, int obj
     u->x = fe.x / density;
     u->y = fe.y / density;
     u->z = fe.z / density;
+    
+    for (int obj = 0; obj < objnum; ++obj)
+    {
+      uint xpos, ypos, zpos;
+      lb_float x, y, z;
+
+      BASE_GetPosByIdx(lattice, i, &xpos, &ypos, &zpos);
+
+      x = xpos * lattice->sizeX / lattice->countX;
+      y = ypos * lattice->sizeY / lattice->countY;
+      z = zpos * lattice->sizeZ / lattice->countZ;
+
+      for (int j = 0; j < forces[obj].forces_num; ++j)
+      {
+        lb_float dist = 0;
+        lb_float dx = forces[obj].forces[j].points.x - x;
+        lb_float dy = forces[obj].forces[j].points.y - y;
+        lb_float dz = forces[obj].forces[j].points.z - z;
+
+        dist += dx * dx;
+        dist += dy * dy;
+        dist += dz * dz;
+        dist = sqrt(dist);
+
+        if (dist < 3 * lattice->sizeX / lattice->countX)
+        {
+          for (k = 0; k < lattice->node_type; ++k)
+          {
+            LB3D_t nvec = {
+              vector[k].x - lattice->velocities[i].x,
+              vector[k].y - lattice->velocities[i].y,
+              vector[k].z - lattice->velocities[i].z
+            };
+            lb_float mul = exp(-dist / 0.01);
+            LB3D_t nforce = {
+              forces[obj].forces[j].vector.x * mul,
+              forces[obj].forces[j].vector.y * mul,
+              forces[obj].forces[j].vector.z * mul
+            };
+            lb_float delta = solver_scalarVectorMultiply(&nforce, &nvec);
+            delta *= solver_feq(lattice, density, u, vector + k);
+            fsi[k] += delta;
+            u->x += (delta * vector[k].x) / density;
+            u->y += (delta * vector[k].y) / density;
+            u->z += (delta * vector[k].z) / density;
+          }
+        }
+      }
+    }
 
     for (k = 0; k < lattice->node_type; ++k)
     {
@@ -364,71 +424,6 @@ void solver_ResolveLBGeneric(LB_Lattice_p lattice, EXTOBJ_obj_p objects, int obj
 #else
   solver_ResolveOpencl(lattice);
 #endif
-  
-  for (int obj = 0; obj < objnum; ++obj)
-  {
-    static EXTOBJ_force_t forces[1000];
-    int forces_num = objects[obj].recalculate_force(&(objects[obj]), NULL, 0, forces);
-    
-    for (int j = 0; j < forces_num; ++j)
-    {
-      lb_float B = 3, mindist = 10e5;
-      int k, mini = 0;
-      lb_float density = 0;
-
-      for (i = 0; i < nodes_cnt; ++i)
-      {
-        lb_float dist = 0;
-        uint xpos, ypos, zpos;
-        lb_float x, y, z;
-
-        BASE_GetPosByIdx(lattice, i, &xpos, &ypos, &zpos);
-
-        x = xpos * lattice->sizeX / lattice->countX;
-        y = ypos * lattice->sizeY / lattice->countY;
-        z = zpos * lattice->sizeZ / lattice->countZ;
-        dist += (forces[j].points.x - x) * (forces[j].points.x - x);
-        dist += (forces[j].points.y - y) * (forces[j].points.y - y);
-        dist += (forces[j].points.z - z) * (forces[j].points.z - z);
-        dist = sqrt(dist);
-
-        if (dist < mindist)
-        {
-          mindist = dist;
-          mini = i;
-        }
-      }
-
-      for (k = 0; k < lattice->node_type; ++k)
-      {
-        lb_float fs = fsn[mini * lattice->node_type + k];
-        density += fs;
-      }
-
-      for (k = 0; k < lattice->node_type; ++k)
-      {
-#if 0
-        lb_float ztau = ((2 * tau - 1) / (2 * tau)) * B;
-        lb_float zvm = solver_scalarVectorMultiply((LB3D_p) (vector + k), &(forces[j].vector));
-        lb_float delta = ztau * zvm * 100000.1;
-        if (!F_COMP(delta, 0))
-        {
-          fsn[mini * lattice->node_type + k] += delta;
-        }
-#else
-        LB3D_t nvec = {
-          vector[k].x - lattice->velocities[mini].x,
-          vector[k].y - lattice->velocities[mini].y,
-          vector[k].z - lattice->velocities[mini].z
-        };
-        lb_float delta = solver_scalarVectorMultiply(&(forces[j].vector), &nvec);
-        delta *= solver_feq(lattice, density, &(lattice->velocities[mini]), vector + k);
-        fsn[mini * lattice->node_type + k] += delta;
-        B= B;
-#endif
-      }
-    }
-  }
   
   memcpy(lattice->fs, lattice->fs + nodes_cnt * lattice->node_type, sizeof(lb_float) * nodes_cnt * lattice->node_type);
 
