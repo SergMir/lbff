@@ -35,6 +35,7 @@ typedef struct
 
 /* ------------------------------- Globals --------------------------------- */
 
+const lb_float c = 1.0 / sqrt(3.0);
 /* --------------------------- Implementation ------------------------------ */
 
 solver_vector_t solver_vectors_D2_Q5[] =
@@ -271,8 +272,7 @@ lb_float solver_feqBHK(LB_Lattice_p lattice, lb_float density, LB3D_p velocity, 
   lb_float fnew;
 
 #if BHK_VAR == 0
-    lb_float c = 1;
-    lb_float teta = c * c / 3;
+    lb_float teta = c * c;
     lb_float A = 1;
     lb_float B = 1 / teta;
     lb_float C = 1 / (2 * teta * teta);
@@ -341,52 +341,15 @@ void solver_ResolveLBGeneric(LB_Lattice_p lattice, EXTOBJ_obj_p objects, int obj
     u->y = fe.y / density;
     u->z = fe.z / density;
     
-    for (int obj = 0; obj < objnum; ++obj)
+    if (c < sqrt(u->x * u->x + u->y * u->y + u->z * u->z))
     {
-      uint xpos, ypos, zpos;
-      lb_float x, y, z;
-
-      BASE_GetPosByIdx(lattice, i, &xpos, &ypos, &zpos);
-
-      x = xpos * lattice->sizeX / lattice->countX;
-      y = ypos * lattice->sizeY / lattice->countY;
-      z = zpos * lattice->sizeZ / lattice->countZ;
-
-      for (int j = 0; j < forces[obj].forces_num; ++j)
+      for (k = 0; k < lattice->node_type; ++k)
       {
-        lb_float dist = 0;
-        lb_float dx = forces[obj].forces[j].points.x - x;
-        lb_float dy = forces[obj].forces[j].points.y - y;
-        lb_float dz = forces[obj].forces[j].points.z - z;
-
-        dist += dx * dx;
-        dist += dy * dy;
-        dist += dz * dz;
-        dist = sqrt(dist);
-
-        if (dist < 3 * lattice->sizeX / lattice->countX)
-        {
-          for (k = 0; k < lattice->node_type; ++k)
-          {
-            LB3D_t nvec = {
-              vector[k].x - lattice->velocities[i].x,
-              vector[k].y - lattice->velocities[i].y,
-              vector[k].z - lattice->velocities[i].z
-            };
-            lb_float mul = exp(-dist / 0.01);
-            LB3D_t nforce = {
-              forces[obj].forces[j].vector.x * mul,
-              forces[obj].forces[j].vector.y * mul,
-              forces[obj].forces[j].vector.z * mul
-            };
-            lb_float delta = solver_scalarVectorMultiply(&nforce, &nvec);
-            delta *= solver_feq(lattice, density, u, vector + k);
-            fsi[k] += delta;
-            u->x += (delta * vector[k].x) / density;
-            u->y += (delta * vector[k].y) / density;
-            u->z += (delta * vector[k].z) / density;
-          }
-        }
+        u->x = 0;
+        u->y = 0;
+        u->z = 0;
+        density = 1.0;
+        fsi[k] = solver_feq(lattice, density, u, vector + k);
       }
     }
 
@@ -417,6 +380,53 @@ void solver_ResolveLBGeneric(LB_Lattice_p lattice, EXTOBJ_obj_p objects, int obj
         if (opp_k < lattice->node_type)
         {
           fsn[i * lattice->node_type + opp_k] += fsi[k];
+          lb_float z = fsn[i * lattice->node_type + opp_k];
+          if (isnan(z) || !isfinite(z))
+          {
+            printf("ISNAN!!\n");
+          }
+        }
+      }
+    }
+    
+    for (int obj = 0; obj < objnum; ++obj)
+    {
+      uint xpos, ypos, zpos;
+      lb_float x, y, z;
+
+      BASE_GetPosByIdx(lattice, i, &xpos, &ypos, &zpos);
+
+      x = xpos * lattice->sizeX / lattice->countX;
+      y = ypos * lattice->sizeY / lattice->countY;
+      z = zpos * lattice->sizeZ / lattice->countZ;
+
+      for (int j = 0; j < forces[obj].forces_num; ++j)
+      {
+        lb_float dist = 0;
+        lb_float dx = forces[obj].forces[j].points.x - x;
+        lb_float dy = forces[obj].forces[j].points.y - y;
+        lb_float dz = forces[obj].forces[j].points.z - z;
+
+        dist += dx * dx;
+        dist += dy * dy;
+        dist += dz * dz;
+        dist = sqrt(dist);
+        lb_float d = 3 * lattice->sizeX / lattice->countX;
+
+        if (dist < d)
+        {
+          for (k = 0; k < lattice->node_type; ++k)
+          {
+            lb_float delta = exp(-dist / d) * solver_scalarVectorMultiply((LB3D_p)(vector + k), &(forces[obj].forces[j].vector));
+            if (fsn[i * lattice->node_type + k] + delta < 0)
+            {
+              fsn[i * lattice->node_type + k] = 0;
+            }
+            else
+            {
+              fsn[i * lattice->node_type + k] += delta;
+            }
+          }
         }
       }
     }
