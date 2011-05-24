@@ -3,3 +3,5 @@ glob:user.mk
 glob:lbff.exe
 glob:nbproject/
 glob:lbff.exe.stackdump
+glob:*.tmp
+glob:*.tmp.dll
