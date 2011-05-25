@@ -328,6 +328,14 @@ void solver_ResolveLBGeneric(LB_Lattice_p lattice, EXTOBJ_obj_p objects, int obj
       LB3D_t fe = {0, 0, 0};
       lb_float *fsi = lattice->fs + i * lattice->node_type;
       int k = 0;
+      uint xpos, ypos, zpos;
+      lb_float x, y, z;
+
+      BASE_GetPosByIdx(lattice, i, &xpos, &ypos, &zpos);
+
+      x = xpos * lattice->sizeX / lattice->countX;
+      y = ypos * lattice->sizeY / lattice->countY;
+      z = zpos * lattice->sizeZ / lattice->countZ;
 
       for (k = 0; k < lattice->node_type; ++k)
       {
@@ -386,15 +394,6 @@ void solver_ResolveLBGeneric(LB_Lattice_p lattice, EXTOBJ_obj_p objects, int obj
 
       for (int obj = 0; obj < objnum; ++obj)
       {
-        uint xpos, ypos, zpos;
-        lb_float x, y, z;
-
-        BASE_GetPosByIdx(lattice, i, &xpos, &ypos, &zpos);
-
-        x = xpos * lattice->sizeX / lattice->countX;
-        y = ypos * lattice->sizeY / lattice->countY;
-        z = zpos * lattice->sizeZ / lattice->countZ;
-
         for (int j = 0; j < forces[obj].forces_num; ++j)
         {
           lb_float dx = forces[obj].forces[j].points.x - x;
