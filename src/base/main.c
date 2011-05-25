@@ -21,6 +21,8 @@
 
 /* ------------------------------- Defines --------------------------------- */
 
+#define LB_FULLSCREEN
+#undef LB_FULLSCREEN
 /* -------------------------------- Types ---------------------------------- */
 
 /* --------------------------- Local Routines ------------------------------ */
@@ -59,7 +61,7 @@ void mainLoop()
   dt_resolved = BASE_GetTimeMs(time_start, time_resolved);
   dt_rendered = BASE_GetTimeMs(time_resolved, time_rendered);
   dt = dt_resolved + dt_rendered;
-  printf("Calculation: %f ms; Rendering: %f ms; Summary: %f ms\n", dt_resolved, dt_rendered, dt);
+  printf("Calculation: %8.3f ms; Rendering: %8.3f ms; Summary: %8.3f ms\n", dt_resolved, dt_rendered, dt);
 
   if (flag_stop)
   {
@@ -81,7 +83,9 @@ int main(int argc, char *argv[])
   glutInitWindowPosition(100, 100);
   glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE);
   glutCreateWindow("LBFF");
+#if defined(LB_FULLSCREEN)
   glutFullScreen();
+#endif
 
   UI_Init();
   SOLVER_Init();
