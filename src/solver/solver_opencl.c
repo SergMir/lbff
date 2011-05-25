@@ -9,12 +9,23 @@
 #include <solver.h>
 #include "solver_internal.h"
 
+/* ------------------------------- Defines --------------------------------- */
+
 #define solver_breakIfFailed(msg, code) \
     if (CL_SUCCESS != status) \
     { \
       printf("[ERROR][%s : %s : %d] %s | error code : (%d)\n", __FILE__, __FUNCTION__, __LINE__, (msg), (code)); \
       break; \
     }
+
+#define SOLVER_OPENCL_DEBUG_BUILD
+#undef SOLVER_OPENCL_DEBUG_BUILD
+
+/* -------------------------------- Types ---------------------------------- */
+
+/* --------------------------- Local Routines ------------------------------ */
+
+/* ------------------------------- Globals --------------------------------- */
 
 const char *sourceLB_BHK =
   "#define F_COMP(X, Y) (fabs((X) - (Y)) < 0.00001f)                         \n"
@@ -230,6 +241,11 @@ cl_kernel kernel_lb_bhk;
 
 size_t global_work_size;
 
+/* --------------------------- Implementation ------------------------------ */
+
+/*
+ * Run OpenCL kernel function
+ */
 int solver_ResolveOpencl(LB_Lattice_p lattice, force_pack_p forces, int forces_num)
 {
   int nodes_cnt = lattice->countX * lattice->countY * lattice->countZ;
@@ -327,6 +343,9 @@ int solver_ResolveOpencl(LB_Lattice_p lattice, force_pack_p forces, int forces_n
   return (CL_SUCCESS == status) ? 0 : -1;
 }
 
+/*
+ * Get supported devices and build OpenCL kernel
+ */
 int solver_initOpencl(void)
 {
   cl_int status;
@@ -359,7 +378,13 @@ int solver_initOpencl(void)
                                                &status);
     solver_breakIfFailed("clCreateProgramWithSource", status);
 
-    status = clBuildProgram(program_lb_bhk, 1, &device, "-g -O0", NULL, NULL);
+    status = clBuildProgram(program_lb_bhk, 1, &device,
+#if defined(SOLVER_OPENCL_DEBUG_BUILD)
+                            "-g -O0",
+#else
+                            NULL,
+#endif
+                            NULL, NULL);
     if (CL_SUCCESS != status)
     {
       char *build_log;
