@@ -48,7 +48,7 @@ void mainLoop()
   
   time_start = BASE_GetTimeNs();
   
-  SOLVER_Resolve(lattice, objects, 1, dt);
+  SOLVER_Resolve(lattice, objects, 1, BASE_GetCalcType(), dt);
   
   time_resolved = BASE_GetTimeNs();
   

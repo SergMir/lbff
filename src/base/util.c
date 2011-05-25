@@ -9,6 +9,7 @@
  */
 #include <lattice.h>
 #include <extobj.h>
+#include <base.h>
 #include <solver.h>
 
 #include <stdlib.h>
@@ -25,6 +26,8 @@
 extern EXTOBJ_obj_p objects;
 extern int flag_stop;
 extern int objects_cnt;
+
+static LB_CalcType_t calc_type = LB_CALC_CPU; 
 
 /* --------------------------- Implementation ------------------------------ */
 
@@ -127,4 +130,23 @@ long BASE_GetTimeNs(void)
 lb_float BASE_GetTimeMs(long time_start, long time_stop)
 {
   return (time_stop - time_start) / 1000000.0;
+}
+
+/*
+ * Set current device type for calculations
+ */
+void BASE_SetCalcType(LB_CalcType_t type)
+{
+  if ((LB_CALC_MAX > type) && (0 <= type))
+  {
+    calc_type = type;
+  }
+}
+
+/*
+ * Get current device type for calculations
+ */
+LB_CalcType_t BASE_GetCalcType(void)
+{
+  return calc_type;
 }

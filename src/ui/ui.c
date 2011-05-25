@@ -33,13 +33,32 @@ void UI_KeyboardHandler(unsigned char key, int x, int y)
 
   switch (key)
   {
-  case 27:
+  case 27: //ESC
     BASE_Stop();
     break;
 
-  case 32:
+  case 32: //SPACE
     forces_on = !forces_on;
     BASE_ForcesSwitch(forces_on);
+    break;
+    
+  case 13: //ENTER
+  {
+    /*
+    LB_CalcType_t type = BASE_GetCalcType() + 1;
+    if (LB_CALC_MAX == type)
+    {
+      type = 0;
+    }*/
+    if (LB_CALC_OPENCL_CPU == BASE_GetCalcType())
+    {
+      BASE_SetCalcType(LB_CALC_CPU);
+    }
+    else
+    {
+      BASE_SetCalcType(LB_CALC_OPENCL_CPU);
+    }
+  }
     break;
     
   default:
