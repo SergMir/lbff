@@ -115,7 +115,7 @@ const char *sourceLB_BHK =
   "                                                                          \n"
   "                                                                          \n"
   "__kernel void lb_bhk(__global float *us,                                  \n"
-  "                     const __global float *fs,                            \n"
+  "                     __global float *fs,                                  \n"
   "                     __global float *fsn,                                 \n"
   "                     const __global float *vectors,                       \n"
   "                     const  int nodes_cnt,                                \n"
@@ -144,6 +144,23 @@ const char *sourceLB_BHK =
   "    us[i * 3 + 0] = fe[0] / density;                                      \n"
   "    us[i * 3 + 1] = fe[1] / density;                                      \n"
   "    us[i * 3 + 2] = fe[2] / density;                                      \n"
+  "                                                                          \n"
+  "    {                                                                     \n"
+  "      float ux = us[i * 3 + 0];                                           \n"
+  "      float uy = us[i * 3 + 1];                                           \n"
+  "      float uz = us[i * 3 + 2];                                           \n"
+  "      if (0.577 < sqrt(ux*ux + uy*uy + uz*uz))                            \n"
+  "      {                                                                   \n"
+  "        for (k = 0; k < vectors_cnt; ++k)                                 \n"
+  "        {                                                                 \n"
+  "          us[i * 3 + 0] = 0;                                              \n"
+  "          us[i * 3 + 1] = 0;                                              \n"
+  "          us[i * 3 + 2] = 0;                                              \n"
+  "          density = 1;                                                    \n"
+  "          fs[i * vectors_cnt + k] = vectors[k*4 + 3];                     \n"
+  "        }                                                                 \n"
+  "      }                                                                   \n"
+  "    }                                                                     \n"
   "                                                                          \n"
   "    for (k = 0; k < vectors_cnt; ++k)                                     \n"
   "    {                                                                     \n"
@@ -273,7 +290,7 @@ int solver_ResolveOpencl(LB_Lattice_p lattice, force_pack_p forces, int forces_n
       solver_breakIfFailed("Create velocities buffer", status);
 
       lattice->openCLparams->fs = clCreateBuffer(context,
-                                                 CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
+                                                 CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR,
                                                  sizeof (lb_float) * fs_size,
                                                  lattice->fs,
                                                  &status);
