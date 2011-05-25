@@ -17,12 +17,12 @@
     }
 
 const char *sourceLB_BHK =
-  "#define F_COMP(X, Y) (fabs((X) - (Y)) < 0.00001)                          \n"
+  "#define F_COMP(X, Y) (fabs((X) - (Y)) < 0.00001f)                         \n"
   "                                                                          \n"
   "typedef struct                                                            \n"
   "{                                                                         \n"
-  "  float *points;                                                          \n"
-  "  float *vector;                                                          \n"
+  "  float  points[3];                                                       \n"
+  "  float  vector[3];                                                       \n"
   "  float  force;                                                           \n"
   "} EXTOBJ_force_t;                                                         \n"
   "                                                                          \n"
@@ -32,15 +32,15 @@ const char *sourceLB_BHK =
   "  EXTOBJ_force_t forces[100];                                             \n"
   "} force_pack_t, *force_pack_p;                                            \n"
   "                                                                          \n"
-  "void getpos(int *sizes, int node, int *pos, float *coord)                 \n"
+  "void getpos(int *counts, int node, int *pos, float *coord)                \n"
   "{                                                                         \n"
-  "  int xy = sizes[0] * sizes[1];                                           \n"
+  "  int xy = counts[0] * counts[1];                                         \n"
   "  float step = 1;                                                         \n"
   "                                                                          \n"
   "  pos[2] = node / xy;                                                     \n"
   "  node -= pos[2] * xy;                                                    \n"
-  "  pos[1] = node / sizes[0];                                               \n"
-  "  pos[0] = node - pos[1] * sizes[0];                                      \n"
+  "  pos[1] = node / counts[0];                                              \n"
+  "  pos[0] = node - pos[1] * counts[0];                                     \n"
   "  if (0 != coord)                                                         \n"
   "  {                                                                       \n"
   "    coord[0] = pos[0] * step;                                             \n"
@@ -49,7 +49,7 @@ const char *sourceLB_BHK =
   "  }                                                                       \n"
   "}                                                                         \n"
   "                                                                          \n"
-  "int nei(int *sizes, int node, float *vector)                              \n"
+  "int nei(int *counts, int node, float *vector)                             \n"
   "{                                                                         \n"
   "  float min1 = 0.577f;                                                    \n"
   "  int dx = fabs(vector[0]) > min1  ? 1 : 0;                               \n"
@@ -57,7 +57,7 @@ const char *sourceLB_BHK =
   "  int dz = fabs(vector[2]) > min1  ? 1 : 0;                               \n"
   "  int pos[3];                                                             \n"
   "                                                                          \n"
-  "  getpos(sizes, node, pos, 0);                                            \n"
+  "  getpos(counts, node, pos, 0);                                           \n"
   "                                                                          \n"
   "  dx *= vector[0] > 0 ? 1 : -1;                                           \n"
   "  dy *= vector[1] > 0 ? 1 : -1;                                           \n"
@@ -68,28 +68,28 @@ const char *sourceLB_BHK =
   "    node = -1;                                                            \n"
   "    if (dx < 0 && pos[0] == 0)                                            \n"
   "      break;                                                              \n"
-  "    if (dx > 0 && pos[0] == (sizes[0] - 1))                               \n"
+  "    if (dx > 0 && pos[0] == (counts[0] - 1))                              \n"
   "      break;                                                              \n"
   "    if (dy < 0 && pos[1] == 0)                                            \n"
   "      break;                                                              \n"
-  "    if (dy > 0 && pos[1] == (sizes[1] - 1))                               \n"
+  "    if (dy > 0 && pos[1] == (counts[1] - 1))                              \n"
   "      break;                                                              \n"
   "    if (dz < 0 && pos[2] == 0)                                            \n"
   "      break;                                                              \n"
-  "    if (dz > 0 && pos[2] == (sizes[2] - 1))                               \n"
+  "    if (dz > 0 && pos[2] == (counts[2] - 1))                              \n"
   "      break;                                                              \n"
   "                                                                          \n"
   "    pos[0] += dx;                                                         \n"
   "    pos[1] += dy;                                                         \n"
   "    pos[2] += dz;                                                         \n"
   "                                                                          \n"
-  "    node = pos[2] * sizes[0] * sizes[1] + pos[1] * sizes[1] + pos[0];     \n"
+  "    node = pos[2] * counts[0] * counts[1] + pos[1] * counts[1] + pos[0];  \n"
   "  } while (0);                                                            \n"
   "                                                                          \n"
   "  return node;                                                            \n"
   "}                                                                         \n"
   "                                                                          \n"
-  "float vec_mul(float *v1, float *v2)                                       \n"
+  "float vec_mul(const float *v1, float *v2)                                 \n"
   "{                                                                         \n"
   "  return v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2];                         \n"
   "}                                                                         \n"
@@ -109,9 +109,9 @@ const char *sourceLB_BHK =
   "                     const __global float *vectors,                       \n"
   "                     const  int nodes_cnt,                                \n"
   "                     const  int vectors_cnt,                              \n"
-  "                     const  int sizeX,                                    \n"
-  "                     const  int sizeY,                                    \n"
-  "                     const  int sizeZ,                                    \n"
+  "                     const  int countX,                                   \n"
+  "                     const  int countY,                                   \n"
+  "                     const  int countZ,                                   \n"
   "                     const __global force_pack_t *forces,                 \n"
   "                     const  int obj_num)                                  \n"
   "{                                                                         \n"
@@ -119,8 +119,8 @@ const char *sourceLB_BHK =
   "  int i = get_global_id(0);                                               \n"
   "  {                                                                       \n"
   "    float density = 0, fe[3] = {0, 0, 0};                                 \n"
-  "    int k;                                                                \n"
-  "    int sizes[3] = { sizeX, sizeY, sizeZ };                               \n"
+  "    int k, obj;                                                           \n"
+  "    int counts[3] = { countX, countY, countZ };                           \n"
   "                                                                          \n"
   "    for (k = 0; k < vectors_cnt; ++k)                                     \n"
   "    {                                                                     \n"
@@ -147,7 +147,7 @@ const char *sourceLB_BHK =
   "        us[i * 3 + 1],                                                    \n"
   "        us[i * 3 + 2],                                                    \n"
   "      };                                                                  \n"
-  "      int next_node = nei(sizes, i, nvec);                                \n"
+  "      int next_node = nei(counts, i, nvec);                               \n"
   "                                                                          \n"
   "      if (-1 != next_node)                                                \n"
   "      {                                                                   \n"
@@ -176,7 +176,49 @@ const char *sourceLB_BHK =
   "        }                                                                 \n"
   "      }                                                                   \n"
   "    }                                                                     \n"
+  "                                                                          \n"
+  "    for (obj = 0; obj < obj_num; ++obj)                                   \n"
+  "    {                                                                     \n"
+  "      int pos[3], j;                                                      \n"
+  "      float coord[3];                                                     \n"
+  "                                                                          \n"
+  "      getpos(counts, i, pos, coord);                                      \n"
+  "                                                                          \n"
+  "      for (j = 0; j < forces[obj].forces_num; ++j)                        \n"
+  "      {                                                                   \n"
+  "        float dx = forces[obj].forces[j].points[0] - pos[0];              \n"
+  "        float dy = forces[obj].forces[j].points[1] - pos[1];              \n"
+  "        float dz = forces[obj].forces[j].points[2] - pos[2];              \n"
+  "        float dist = sqrt(dx*dx + dy*dy + dz*dz);                         \n"
+  "                                                                          \n"
+  "        float d = 3.0f * 90.0f / countX;                                  \n"
+  "                                                                          \n"
+  "        if (dist < d)                                                     \n"
+  "        {                                                                 \n"
+  "          for (k = 0; k < vectors_cnt; ++k)                               \n"
+  "          {                                                               \n"
+  "            float nvec[3] = {                                             \n"
+  "              vectors[k * 4 + 0],                                         \n"
+  "              vectors[k * 4 + 1],                                         \n"
+  "              vectors[k * 4 + 2] };                                       \n"
+  "            float nforce[3] = {                                           \n"
+  "              forces[obj].forces[j].vector[0],                            \n"
+  "              forces[obj].forces[j].vector[1],                            \n"
+  "              forces[obj].forces[j].vector[2] };                          \n"
+  "            float delta = exp(-dist / d);                                 \n"
+  "            delta *= vec_mul(nvec,                                        \n"
+  "                             nforce);                                     \n"
+  "            if (fsn[i * vectors_cnt + k] + delta < 0)                     \n"
+  "            {                                                             \n"
+  "              delta = 0;                                                  \n"
+  "            }                                                             \n"
+  "            fsn[i * vectors_cnt + k] += delta;                            \n"
+  "          }                                                               \n"
+  "        }                                                                 \n"
+  "      }                                                                   \n"
+  "    }                                                                     \n"
   "  }                                                                       \n"
+  "                                                                          \n"
   "} \n";
 
 cl_platform_id platform;
@@ -248,13 +290,14 @@ int solver_ResolveOpencl(LB_Lattice_p lattice, force_pack_p forces, int forces_n
     clSetKernelArg(kernel_lb_bhk, 1, sizeof (cl_mem), (void*) &(lattice->openCLparams->fs));
     clSetKernelArg(kernel_lb_bhk, 2, sizeof (cl_mem), (void*) &(lattice->openCLparams->fsnew));
     clSetKernelArg(kernel_lb_bhk, 3, sizeof (cl_mem), (void*) &(lattice->openCLparams->vectors));
-    clSetKernelArg(kernel_lb_bhk, 4, sizeof (int), (void*) &nodes_cnt);
-    clSetKernelArg(kernel_lb_bhk, 5, sizeof (int), (void*) &(lattice->node_type));
-    clSetKernelArg(kernel_lb_bhk, 6, sizeof (int), (void*) &(lattice->countX));
-    clSetKernelArg(kernel_lb_bhk, 7, sizeof (int), (void*) &(lattice->countY));
-    clSetKernelArg(kernel_lb_bhk, 8, sizeof (int), (void*) &(lattice->countZ));
+    clSetKernelArg(kernel_lb_bhk, 4, sizeof (int),    (void*) &(nodes_cnt));
+    clSetKernelArg(kernel_lb_bhk, 5, sizeof (int),    (void*) &(lattice->node_type));
+    clSetKernelArg(kernel_lb_bhk, 6, sizeof (int),    (void*) &(lattice->countX));
+    clSetKernelArg(kernel_lb_bhk, 7, sizeof (int),    (void*) &(lattice->countY));
+    clSetKernelArg(kernel_lb_bhk, 8, sizeof (int),    (void*) &(lattice->countZ));
     clSetKernelArg(kernel_lb_bhk, 9, sizeof (cl_mem), (void*) &(clForces));
-    clSetKernelArg(kernel_lb_bhk,10, sizeof (int), (void*) &forces_num);
+    clSetKernelArg(kernel_lb_bhk,10, sizeof (int),    (void*) &(forces_num));
+
     status = clEnqueueNDRangeKernel(queue,
                                     kernel_lb_bhk,
                                     1,
@@ -263,6 +306,7 @@ int solver_ResolveOpencl(LB_Lattice_p lattice, force_pack_p forces, int forces_n
                                     NULL, 0, NULL,
                                     NULL);
     solver_breakIfFailed("clEnqueueNDRangeKernel", status);
+
     clFinish(queue);
 
     status = clEnqueueReadBuffer(queue,
@@ -273,6 +317,10 @@ int solver_ResolveOpencl(LB_Lattice_p lattice, force_pack_p forces, int forces_n
                                  lattice->fs + fs_size,
                                  0, NULL, NULL);
     solver_breakIfFailed("clEnqueueReadBuffer", status);
+    
+    status = clReleaseMemObject(clForces);
+    solver_breakIfFailed("clReleaseMemObject", status);
+    
     clReleaseCommandQueue(queue);
   } while (0);
   
@@ -311,7 +359,7 @@ int solver_initOpencl(void)
                                                &status);
     solver_breakIfFailed("clCreateProgramWithSource", status);
 
-    status = clBuildProgram(program_lb_bhk, 1, &device, NULL, NULL, NULL);
+    status = clBuildProgram(program_lb_bhk, 1, &device, "-g -O0", NULL, NULL);
     if (CL_SUCCESS != status)
     {
       char *build_log;
