@@ -25,12 +25,6 @@
 
 /* -------------------------------- Types ---------------------------------- */
 
-typedef struct
-{
-  EXTOBJ_force_t forces[100];
-  int forces_num;
-} force_pack_t;
-
 /* --------------------------- Local Routines ------------------------------ */
 
 /* ------------------------------- Globals --------------------------------- */
@@ -302,11 +296,9 @@ lb_float solver_feq(LB_Lattice_p lattice, lb_float density, LB3D_p velocity, sol
  */
 void solver_ResolveLBGeneric(LB_Lattice_p lattice, EXTOBJ_obj_p objects, int objnum, lb_float dt)
 {
-  int i, nodes_cnt = lattice->countX * lattice->countY * lattice->countZ;
+  int nodes_cnt = lattice->countX * lattice->countY * lattice->countZ;
   static force_pack_t forces[100];
-  
-  
-  solver_vector_p vector = solver_GetVectors(lattice->node_type);
+
   lb_float tau = 0.55;
   lb_float *fsn = lattice->fs + nodes_cnt * lattice->node_type;
   
@@ -321,6 +313,9 @@ void solver_ResolveLBGeneric(LB_Lattice_p lattice, EXTOBJ_obj_p objects, int obj
   }
 
 #if 1
+  int i;
+  solver_vector_p vector = solver_GetVectors(lattice->node_type);
+
   for (i = 0; i < nodes_cnt; ++i)
   {
     LB3D_p u = lattice->velocities + i;
@@ -432,7 +427,7 @@ void solver_ResolveLBGeneric(LB_Lattice_p lattice, EXTOBJ_obj_p objects, int obj
     }
   }
 #else
-  solver_ResolveOpencl(lattice);
+  solver_ResolveOpencl(lattice, forces, objnum);
 #endif
   
   memcpy(lattice->fs, lattice->fs + nodes_cnt * lattice->node_type, sizeof(lb_float) * nodes_cnt * lattice->node_type);

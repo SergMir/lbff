@@ -19,14 +19,34 @@
 const char *sourceLB_BHK =
   "#define F_COMP(X, Y) (fabs((X) - (Y)) < 0.00001)                          \n"
   "                                                                          \n"
-  "void getpos(int *sizes, int node, int *pos)                               \n"
+  "typedef struct                                                            \n"
+  "{                                                                         \n"
+  "  float *points;                                                          \n"
+  "  float *vector;                                                          \n"
+  "  float  force;                                                           \n"
+  "} EXTOBJ_force_t;                                                         \n"
+  "                                                                          \n"
+  "typedef struct                                                            \n"
+  "{                                                                         \n"
+  "  int forces_num;                                                         \n"
+  "  EXTOBJ_force_t forces[100];                                             \n"
+  "} force_pack_t, *force_pack_p;                                            \n"
+  "                                                                          \n"
+  "void getpos(int *sizes, int node, int *pos, float *coord)                 \n"
   "{                                                                         \n"
   "  int xy = sizes[0] * sizes[1];                                           \n"
+  "  float step = 1;                                                         \n"
   "                                                                          \n"
   "  pos[2] = node / xy;                                                     \n"
   "  node -= pos[2] * xy;                                                    \n"
   "  pos[1] = node / sizes[0];                                               \n"
   "  pos[0] = node - pos[1] * sizes[0];                                      \n"
+  "  if (0 != coord)                                                         \n"
+  "  {                                                                       \n"
+  "    coord[0] = pos[0] * step;                                             \n"
+  "    coord[1] = pos[1] * step;                                             \n"
+  "    coord[2] = pos[2] * step;                                             \n"
+  "  }                                                                       \n"
   "}                                                                         \n"
   "                                                                          \n"
   "int nei(int *sizes, int node, float *vector)                              \n"
@@ -37,7 +57,7 @@ const char *sourceLB_BHK =
   "  int dz = fabs(vector[2]) > min1  ? 1 : 0;                               \n"
   "  int pos[3];                                                             \n"
   "                                                                          \n"
-  "  getpos(sizes, node, pos);                                               \n"
+  "  getpos(sizes, node, pos, 0);                                            \n"
   "                                                                          \n"
   "  dx *= vector[0] > 0 ? 1 : -1;                                           \n"
   "  dy *= vector[1] > 0 ? 1 : -1;                                           \n"
@@ -91,7 +111,9 @@ const char *sourceLB_BHK =
   "                     const  int vectors_cnt,                              \n"
   "                     const  int sizeX,                                    \n"
   "                     const  int sizeY,                                    \n"
-  "                     const  int sizeZ)                                    \n"
+  "                     const  int sizeZ,                                    \n"
+  "                     const __global force_pack_t *forces,                 \n"
+  "                     const  int obj_num)                                  \n"
   "{                                                                         \n"
   "  float tau = 0.55f;                                                      \n"
   "  int i = get_global_id(0);                                               \n"
@@ -166,13 +188,14 @@ cl_kernel kernel_lb_bhk;
 
 size_t global_work_size;
 
-int solver_ResolveOpencl(LB_Lattice_p lattice)
+int solver_ResolveOpencl(LB_Lattice_p lattice, force_pack_p forces, int forces_num)
 {
   int nodes_cnt = lattice->countX * lattice->countY * lattice->countZ;
   int fs_size = nodes_cnt * lattice->node_type;
   cl_command_queue queue;
   solver_vector_p vector = solver_GetVectors(lattice->node_type);
   cl_int status;
+  cl_mem clForces;
 
   do
   {
@@ -199,7 +222,7 @@ int solver_ResolveOpencl(LB_Lattice_p lattice)
       solver_breakIfFailed("Create fs buffer", status);
 
       lattice->openCLparams->fsnew = clCreateBuffer(context,
-                                                    CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR,
+                                                    CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR,
                                                     sizeof (lb_float) * fs_size,
                                                     lattice->fs + fs_size,
                                                     &status);
@@ -212,6 +235,12 @@ int solver_ResolveOpencl(LB_Lattice_p lattice)
                                                       &status);
       solver_breakIfFailed("Create vectors buffer", status);
     }
+    
+    clForces = clCreateBuffer(context,
+                              CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
+                              sizeof (force_pack_t) * forces_num,
+                              forces,
+                              &status);
 
 
     global_work_size = nodes_cnt;
@@ -224,6 +253,8 @@ int solver_ResolveOpencl(LB_Lattice_p lattice)
     clSetKernelArg(kernel_lb_bhk, 6, sizeof (int), (void*) &(lattice->countX));
     clSetKernelArg(kernel_lb_bhk, 7, sizeof (int), (void*) &(lattice->countY));
     clSetKernelArg(kernel_lb_bhk, 8, sizeof (int), (void*) &(lattice->countZ));
+    clSetKernelArg(kernel_lb_bhk, 9, sizeof (cl_mem), (void*) &(clForces));
+    clSetKernelArg(kernel_lb_bhk,10, sizeof (int), (void*) &forces_num);
     status = clEnqueueNDRangeKernel(queue,
                                     kernel_lb_bhk,
                                     1,
