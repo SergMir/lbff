@@ -312,7 +312,7 @@ void solver_ResolveLBGeneric(LB_Lattice_p lattice, EXTOBJ_obj_p objects, int obj
     forces[obj].forces_num = objects[obj].recalculate_force(&(objects[obj]), NULL, 0, forces[obj].forces);
   }
 
-#if 1
+#if 0
   int i;
   solver_vector_p vector = solver_GetVectors(lattice->node_type);
 
@@ -375,11 +375,6 @@ void solver_ResolveLBGeneric(LB_Lattice_p lattice, EXTOBJ_obj_p objects, int obj
         if (opp_k < lattice->node_type)
         {
           fsn[i * lattice->node_type + opp_k] += fsi[k];
-          lb_float z = fsn[i * lattice->node_type + opp_k];
-          if (isnan(z) || !isfinite(z))
-          {
-            printf("ISNAN!!\n");
-          }
         }
       }
     }
@@ -397,15 +392,11 @@ void solver_ResolveLBGeneric(LB_Lattice_p lattice, EXTOBJ_obj_p objects, int obj
 
       for (int j = 0; j < forces[obj].forces_num; ++j)
       {
-        lb_float dist = 0;
         lb_float dx = forces[obj].forces[j].points.x - x;
         lb_float dy = forces[obj].forces[j].points.y - y;
         lb_float dz = forces[obj].forces[j].points.z - z;
+        lb_float dist = sqrt(dx*dx + dy*dy + dz*dz);
 
-        dist += dx * dx;
-        dist += dy * dy;
-        dist += dz * dz;
-        dist = sqrt(dist);
         lb_float d = 3 * lattice->sizeX / lattice->countX;
 
         if (dist < d)
