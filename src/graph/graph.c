@@ -110,10 +110,9 @@ void GRAPH_Redraw(const LB_Lattice_p lattice, const EXTOBJ_obj_p objects, uint o
     glColor3f(red, 0.0f, blue);
     glVertex2f(x, y);
   #if defined(RERP_VECTORS)
-    lb_float d = rel_velocity;
-    lb_float dx = lattice->velocities[i].x > 0 ? d : -d;
+    lb_float dx = lattice->velocities[i].x / new_max;
     dx *= lattice->sizeX / lattice->countX;
-    lb_float dy = lattice->velocities[i].y > 0 ? d : -d;
+    lb_float dy = lattice->velocities[i].y / new_max;
     dy *= lattice->sizeY / lattice->countY;
     glVertex2f(x + dx, y + dy);
   #endif
