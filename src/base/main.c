@@ -94,7 +94,8 @@ int main(int argc, char *argv[])
                              90, 90, 1);
   obj_set = EXTOBJ_CreateObjectSet(100);
   BASE_SetCurrentObjectSet(obj_set);
-  EXTOBJ_AddObject(obj_set, EXTOBJ_TYPE_SIMPLE);
+  LB3D_t pos = { 10, 10, 0 };
+  EXTOBJ_AddObject(obj_set, &pos, EXTOBJ_TYPE_SIMPLE);
   ++objects_cnt;
   GRAPH_Init(mainLoop);
 

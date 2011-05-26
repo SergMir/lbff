@@ -47,9 +47,9 @@ int EXTOBJ_ForceCalcSimple(void *_obj, const EXTOBJ_force_t *input_forces, uint 
     maxz = max(maxz, obj->points[i].z);
     minz = min(minz, obj->points[i].z);
   }
-  output_forces[0].points.x = (maxx + minx) / 2;
-  output_forces[0].points.y = (maxy + miny) / 2;
-  output_forces[0].points.z = (maxz + minz) / 2;
+  output_forces[0].points.x = obj->pos.x + (maxx + minx) / 2;
+  output_forces[0].points.y = obj->pos.y + (maxy + miny) / 2;
+  output_forces[0].points.z = obj->pos.z + (maxz + minz) / 2;
 
   if (obj->turnedOn)
   {
@@ -84,7 +84,7 @@ EXTOBJ_obj_set_p EXTOBJ_CreateObjectSet(int capacity)
 /*
  * Object constructor
  */
-void EXTOBJ_AddObject(EXTOBJ_obj_set_p obj_set, EXTOBJ_obj_type_t type)
+void EXTOBJ_AddObject(EXTOBJ_obj_set_p obj_set, LB3D_p pos, EXTOBJ_obj_type_t type)
 {
   if (NULL != obj_set && obj_set)
   {
@@ -95,14 +95,15 @@ void EXTOBJ_AddObject(EXTOBJ_obj_set_p obj_set, EXTOBJ_obj_type_t type)
     case EXTOBJ_TYPE_SIMPLE:
     {
       LB3D_t points[] = {
+        { 0,  0, 0},
+        {10,  0, 0},
         {10, 10, 0},
-        {30, 10, 0},
-        {30, 30, 0},
-        {10, 30, 0} };
+        { 0, 10, 0} };
       size_t points_cnt = sizeof (points) / sizeof (LB3D_t);
       size_t size = sizeof (LB3D_t) * points_cnt;
       obj->points = (LB3D_p) malloc(size);
       memcpy(obj->points, points, size);
+      memcpy(&(obj->pos), pos, sizeof(LB3D_t));
 
       obj->recalculate_force = EXTOBJ_ForceCalcSimple;
       obj->points_cnt = points_cnt;

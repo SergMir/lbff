@@ -20,6 +20,7 @@ typedef int (*EXTOBJ_force_calculate)(void *obj, const EXTOBJ_force_t *input_for
 
 typedef struct
 {
+  LB3D_t pos;
   LB3D_p points;
   int points_cnt;
   int turnedOn;
@@ -34,7 +35,7 @@ typedef struct
 } EXTOBJ_obj_set_t, *EXTOBJ_obj_set_p;
 
 EXTOBJ_obj_set_p EXTOBJ_CreateObjectSet(int capacity);
-void EXTOBJ_AddObject(EXTOBJ_obj_set_p obj_set, EXTOBJ_obj_type_t type);
+void EXTOBJ_AddObject(EXTOBJ_obj_set_p obj_set, LB3D_p pos, EXTOBJ_obj_type_t type);
 
 #endif /* EXTOBJ_H */
 
