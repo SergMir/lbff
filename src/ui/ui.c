@@ -39,7 +39,7 @@ void UI_KeyboardHandler(unsigned char key, int x, int y)
 
   case 32: //SPACE
     forces_on = !forces_on;
-    BASE_ForcesSwitch(forces_on);
+    BASE_ForcesSwitch(BASE_GetCurrentObjectSet(), forces_on);
     break;
     
   case 13: //ENTER
@@ -103,7 +103,7 @@ void UI_SpecKeyboardHandler(int key, int x, int y)
   case GLUT_KEY_RIGHT:
   case GLUT_KEY_UP:
   case GLUT_KEY_DOWN:
-    BASE_MoveObjects(dx, dy, 0);
+    BASE_MoveObjects(BASE_GetCurrentObjectSet(), dx, dy, 0);
     break;
   }
   

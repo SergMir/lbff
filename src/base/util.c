@@ -41,12 +41,12 @@ void BASE_Stop()
 /*
  * Turn on/off active force-generation objects (engines, etc.)
  */
-void BASE_ForcesSwitch(int on)
+void BASE_ForcesSwitch(EXTOBJ_obj_set_p obj_set, int on)
 {
   uint i = 0;
-  for (i = 0; i < BASE_GetCurrentObjectSet()->count; ++i)
+  for (i = 0; i < obj_set->count; ++i)
   {
-    BASE_GetCurrentObjectSet()->objects[i].turnedOn = on;
+    obj_set->objects[i].turnedOn = on;
   }
 }
 
@@ -66,13 +66,13 @@ void BASE_GetPosByIdx(const LB_Lattice_p lattice, int index, uint *x, uint *y, u
 /*
  * Move objects on xyz deltas
  */
-void BASE_MoveObjects(lb_float dx, lb_float dy, lb_float dz)
+void BASE_MoveObjects(EXTOBJ_obj_set_p obj_set, lb_float dx, lb_float dy, lb_float dz)
 {
   int i = 0, j = 0;
 
   for (i = 0; i < 1; ++i)
   {
-    EXTOBJ_obj_p objects = BASE_GetCurrentObjectSet()->objects;
+    EXTOBJ_obj_p objects = obj_set->objects;
     for (j = 0; j < objects[i].points_cnt; ++j)
     {
       objects[i].points[j].x += dx;
