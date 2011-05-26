@@ -23,9 +23,8 @@
 
 /* ------------------------------- Globals --------------------------------- */
 
-extern EXTOBJ_obj_p objects;
 extern int flag_stop;
-extern int objects_cnt;
+static EXTOBJ_obj_set_p current_obj_set = NULL;
 
 static LB_CalcType_t calc_type = LB_CALC_CPU; 
 
@@ -44,10 +43,10 @@ void BASE_Stop()
  */
 void BASE_ForcesSwitch(int on)
 {
-  int i = 0;
-  for (i = 0; i < objects_cnt; ++i)
+  uint i = 0;
+  for (i = 0; i < BASE_GetCurrentObjectSet()->count; ++i)
   {
-    objects[i].turnedOn = on;
+    BASE_GetCurrentObjectSet()->objects[i].turnedOn = on;
   }
 }
 
@@ -73,6 +72,7 @@ void BASE_MoveObjects(lb_float dx, lb_float dy, lb_float dz)
 
   for (i = 0; i < 1; ++i)
   {
+    EXTOBJ_obj_p objects = BASE_GetCurrentObjectSet()->objects;
     for (j = 0; j < objects[i].points_cnt; ++j)
     {
       objects[i].points[j].x += dx;
@@ -149,4 +149,20 @@ void BASE_SetCalcType(LB_CalcType_t type)
 LB_CalcType_t BASE_GetCalcType(void)
 {
   return calc_type;
+}
+
+/*
+ * Set current working set of external objects
+ */
+void BASE_SetCurrentObjectSet(EXTOBJ_obj_set_p obj_set)
+{
+  current_obj_set = obj_set;
+}
+
+/*
+ * Get current working set of external objects
+ */
+EXTOBJ_obj_set_p BASE_GetCurrentObjectSet(void)
+{
+  return current_obj_set;
 }

@@ -1,6 +1,8 @@
 #ifndef BASE_H
 #define BASE_H
 
+#include <extobj.h>
+
 #define max(a, b) ((a > b) ? (a) : (b))
 #define min(a, b) ((a < b) ? (a) : (b))
 #define LB_IS_LATTICE_HEX(lattice_type) ((lattice_type) == LB_LATTICE_2D_HEX || (lattice_type) == LB_LATTICE_3D_HEX)
@@ -20,6 +22,9 @@ void BASE_GetPosByIdx(const LB_Lattice_p lattice, int index, uint *x, uint *y, u
 long BASE_GetTimeNs(void);
 void BASE_SetCalcType(LB_CalcType_t type);
 LB_CalcType_t BASE_GetCalcType(void);
+
+void BASE_SetCurrentObjectSet(EXTOBJ_obj_set_p obj_set);
+EXTOBJ_obj_set_p BASE_GetCurrentObjectSet(void);
 
 lb_float BASE_GetTimeMs(long time_start, long time_stop);
 LB_Lattice_t* LB_CreateLattice(LB_lattice_type_t lattice_type, LB_node_type_t node_type,

@@ -70,32 +70,48 @@ int EXTOBJ_ForceCalcSimple(void *_obj, const EXTOBJ_force_t *input_forces, uint 
   return 1;
 }
 
+EXTOBJ_obj_set_p EXTOBJ_CreateObjectSet(int capacity)
+{
+  EXTOBJ_obj_set_p obj_set = (EXTOBJ_obj_set_p)malloc(sizeof(EXTOBJ_obj_set_t));
+
+  obj_set->objects = (EXTOBJ_obj_p)malloc(sizeof(EXTOBJ_obj_t) * capacity);
+  obj_set->capacity = capacity;
+  obj_set->count = 0;
+
+  return obj_set;
+}
+
 /*
  * Object constructor
  */
-EXTOBJ_obj_p EXTOBJ_CreateObject(EXTOBJ_obj_type_t type)
+void EXTOBJ_AddObject(EXTOBJ_obj_set_p obj_set, EXTOBJ_obj_type_t type)
 {
-  EXTOBJ_obj_p obj = (EXTOBJ_obj_p)malloc(sizeof(EXTOBJ_obj_t));
-
-  switch (type)
+  if (NULL != obj_set && obj_set)
   {
-  case EXTOBJ_TYPE_SIMPLE:
-  {
-    LB3D_t points[] = {{10, 10, 0}, {30, 10, 0}, {30, 30, 0}, {10, 30, 0}};
-    size_t points_cnt = sizeof(points) / sizeof(LB3D_t);
-    size_t size = sizeof(LB3D_t) * points_cnt;
-    obj->points = (LB3D_p)malloc(size);
-    memcpy(obj->points, points, size);
+    EXTOBJ_obj_p obj = &(obj_set->objects[obj_set->count++]);
+    
+    switch (type)
+    {
+    case EXTOBJ_TYPE_SIMPLE:
+    {
+      LB3D_t points[] = {
+        {10, 10, 0},
+        {30, 10, 0},
+        {30, 30, 0},
+        {10, 30, 0} };
+      size_t points_cnt = sizeof (points) / sizeof (LB3D_t);
+      size_t size = sizeof (LB3D_t) * points_cnt;
+      obj->points = (LB3D_p) malloc(size);
+      memcpy(obj->points, points, size);
 
-    obj->recalculate_force = EXTOBJ_ForceCalcSimple;
-    obj->points_cnt = points_cnt;
-    obj->turnedOn = 0;
+      obj->recalculate_force = EXTOBJ_ForceCalcSimple;
+      obj->points_cnt = points_cnt;
+      obj->turnedOn = 0;
+    }
+      break;
+
+    default:
+      break;
+    }
   }
-    break;
-
-  default:
-    break;
-  }
-
-  return obj;
 }

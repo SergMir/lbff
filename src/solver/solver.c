@@ -294,7 +294,7 @@ lb_float solver_feq(LB_Lattice_p lattice, lb_float density, LB3D_p velocity, sol
 /*
  * Calculate with generic LBM
  */
-void solver_ResolveLBGeneric(LB_Lattice_p lattice, EXTOBJ_obj_p objects, int objnum, LB_CalcType_t calc_type, lb_float dt)
+void solver_ResolveLBGeneric(LB_Lattice_p lattice, EXTOBJ_obj_set_p obj_set, LB_CalcType_t calc_type, lb_float dt)
 {
   int nodes_cnt = lattice->countX * lattice->countY * lattice->countZ;
   static force_pack_t forces[100];
@@ -307,14 +307,14 @@ void solver_ResolveLBGeneric(LB_Lattice_p lattice, EXTOBJ_obj_p objects, int obj
          sizeof(lb_float) * nodes_cnt * lattice->node_type);
   tau = tau;
   
-  for (int obj = 0; obj < objnum; ++obj)
+  for (uint obj = 0; obj < obj_set->count; ++obj)
   {
-    forces[obj].forces_num = objects[obj].recalculate_force(&(objects[obj]), NULL, 0, forces[obj].forces);
+    forces[obj].forces_num = obj_set->objects[obj].recalculate_force(&(obj_set->objects[obj]), NULL, 0, forces[obj].forces);
   }
 
   if (LB_CALC_OPENCL_CPU == calc_type)
   {
-    solver_ResolveOpencl(lattice, forces, objnum);
+    solver_ResolveOpencl(lattice, forces, obj_set->count);
   }
   else if (LB_CALC_CPU == calc_type)
   {
@@ -392,7 +392,7 @@ void solver_ResolveLBGeneric(LB_Lattice_p lattice, EXTOBJ_obj_p objects, int obj
         }
       }
 
-      for (int obj = 0; obj < objnum; ++obj)
+      for (uint obj = 0; obj < obj_set->count; ++obj)
       {
         for (int j = 0; j < forces[obj].forces_num; ++j)
         {
@@ -425,9 +425,6 @@ void solver_ResolveLBGeneric(LB_Lattice_p lattice, EXTOBJ_obj_p objects, int obj
   
   memcpy(lattice->fs, lattice->fs + nodes_cnt * lattice->node_type, sizeof(lb_float) * nodes_cnt * lattice->node_type);
 
-  lattice = lattice;
-  objects = objects;
-  objnum = objnum;
   dt = dt;
 }
 
@@ -491,8 +488,8 @@ void solver_ResolveNonPhysical(LB_Lattice_p lattice, EXTOBJ_obj_p objects, int o
 /*
  * Calculate lattice parameters with time delta = dt
  */
-void SOLVER_Resolve(LB_Lattice_p lattice, EXTOBJ_obj_p objects, int objnum, LB_CalcType_t calc_type, lb_float dt)
+void SOLVER_Resolve(LB_Lattice_p lattice, EXTOBJ_obj_set_p objects, LB_CalcType_t calc_type, lb_float dt)
 {
   //solver_ResolveNonPhysical(lattice, objects, objnum, dt);
-  solver_ResolveLBGeneric(lattice, objects, objnum, calc_type, dt);
+  solver_ResolveLBGeneric(lattice, objects, calc_type, dt);
 }

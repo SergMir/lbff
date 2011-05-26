@@ -62,7 +62,7 @@ int GRAPH_Init(f_mainloop_t mainloop)
 /*
  * Main draw function: draw given lattice and objects
  */
-void GRAPH_Redraw(const LB_Lattice_p lattice, const EXTOBJ_obj_p objects, uint objcnt)
+void GRAPH_Redraw(const LB_Lattice_p lattice, const EXTOBJ_obj_set_p obj_set)
 {
   uint i, nodes_cnt = lattice->countX * lattice->countY * lattice->countZ;
   LB3D_p ch_vector = lattice->velocities;
@@ -126,8 +126,9 @@ void GRAPH_Redraw(const LB_Lattice_p lattice, const EXTOBJ_obj_p objects, uint o
   glColor3f(0, 1.0f, 0);
 
   glBegin(GL_LINES);
-  for (i = 0; i < objcnt; ++i)
+  for (i = 0; i < obj_set->count; ++i)
   {
+    EXTOBJ_obj_p objects = obj_set->objects;
     int j = 0;
     for (j = 0; j < objects[i].points_cnt - 1; ++j)
     {

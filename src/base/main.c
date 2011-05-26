@@ -30,7 +30,7 @@
 /* ------------------------------- Globals --------------------------------- */
 
 LB_Lattice_t *lattice = NULL;
-EXTOBJ_obj_p objects = NULL;
+EXTOBJ_obj_set_p obj_set = NULL;
 
 int objects_cnt = 0;
 int flag_stop = 0;
@@ -50,11 +50,11 @@ void mainLoop()
   
   time_start = BASE_GetTimeNs();
   
-  SOLVER_Resolve(lattice, objects, 1, BASE_GetCalcType(), dt);
+  SOLVER_Resolve(lattice, obj_set, BASE_GetCalcType(), dt);
   
   time_resolved = BASE_GetTimeNs();
   
-  GRAPH_Redraw(lattice, objects, 1);
+  GRAPH_Redraw(lattice, obj_set);
   
   time_rendered = BASE_GetTimeNs();
 
@@ -92,7 +92,9 @@ int main(int argc, char *argv[])
   lattice = LB_CreateLattice(LB_LATTICE_2D_SQUARE, LB_NODE_D2_Q9,
                              90, 90, 1,
                              90, 90, 1);
-  objects = EXTOBJ_CreateObject(EXTOBJ_TYPE_SIMPLE);
+  obj_set = EXTOBJ_CreateObjectSet(100);
+  BASE_SetCurrentObjectSet(obj_set);
+  EXTOBJ_AddObject(obj_set, EXTOBJ_TYPE_SIMPLE);
   ++objects_cnt;
   GRAPH_Init(mainLoop);
 

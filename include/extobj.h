@@ -26,7 +26,15 @@ typedef struct
   EXTOBJ_force_calculate recalculate_force;
 } EXTOBJ_obj_t, *EXTOBJ_obj_p;
 
-EXTOBJ_obj_p EXTOBJ_CreateObject(EXTOBJ_obj_type_t type);
+typedef struct
+{
+  uint capacity;
+  uint count;
+  EXTOBJ_obj_p objects;
+} EXTOBJ_obj_set_t, *EXTOBJ_obj_set_p;
+
+EXTOBJ_obj_set_p EXTOBJ_CreateObjectSet(int capacity);
+void EXTOBJ_AddObject(EXTOBJ_obj_set_p obj_set, EXTOBJ_obj_type_t type);
 
 #endif /* EXTOBJ_H */
 
