@@ -16,6 +16,7 @@
 #include <GL/glut.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 /* ------------------------------- Defines --------------------------------- */
 
@@ -131,6 +132,42 @@ void UI_SpecKeyboardHandler(int key, int x, int y)
   y = y;
 }
 
+void ui_MouseHandler(int button, int state, int sx, int sy)
+{
+  ui_buttons_p cbutton;
+  GLdouble x, y, z;
+  
+  GLint   viewport[4];
+  GLdouble projection[16];
+  GLdouble modelview[16];
+  
+  glGetIntegerv(GL_VIEWPORT, viewport);
+  glGetDoublev(GL_PROJECTION_MATRIX, projection);
+  glGetDoublev(GL_MODELVIEW_MATRIX, modelview);
+  
+  gluUnProject(sx, sy, 0, modelview, projection, viewport, &x, &y, &z);
+  
+  y = 100.0 - y;
+
+  for (cbutton = ui_buttons_head; NULL != cbutton; cbutton = cbutton->next)
+  {
+    UI_button_p button = &cbutton->button;
+
+    if (x >= button->x &&
+      x <= button->x + button->width &&
+      y >= button->y &&
+      y <= button->y + button->height)
+    {
+      break;
+    }
+  }
+  
+  if (NULL != cbutton && GLUT_LEFT_BUTTON == button)
+  {
+    cbutton->button.callback(GLUT_DOWN == state ? UI_ACT_PRESSED : UI_ACT_RELEASED);
+  }
+}
+
 /*
  * 
  */
@@ -228,13 +265,23 @@ void UI_Draw(void)
 }
 
 /*
+ * Test button callback handler
+ */
+void ui_testButoonHandler(UI_action_t action)
+{
+  printf("Test button, action: %d\n", action);
+}
+
+/*
  * Register keys callbacks
  */
 int UI_Init()
 {
-  UI_CreateLabel(5, 5, 20, 5, "Hi!!");
+  UI_CreateLabel(1, 90, 20, 5, "Label sample");
+  UI_CreateButton(30, 90, 20, 5, "Button sample", ui_testButoonHandler);
   glutKeyboardFunc(UI_KeyboardHandler);
   glutSpecialFunc(UI_SpecKeyboardHandler);
+  glutMouseFunc(ui_MouseHandler);
   return 0;
 }
 
