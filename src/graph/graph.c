@@ -20,6 +20,7 @@
 /* ------------------------------- Defines --------------------------------- */
 
 #define RERP_VECTORS
+//#define DEBUG
 
 /* -------------------------------- Types ---------------------------------- */
 
@@ -39,7 +40,7 @@ void graph_Reshape(int width, int height)
   glViewport(0, 0, width, height);
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  gluOrtho2D(-10, 100, -10, 100);
+  gluOrtho2D(0, 100, 0, 100);
   glMatrixMode(GL_MODELVIEW);
 }
 
@@ -55,7 +56,7 @@ int GRAPH_Init(f_mainloop_t mainloop)
   glViewport(0, 0, 400, 300);
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  gluOrtho2D(-10, 100, -10, 100);
+  gluOrtho2D(0, 100, 0, 100);
   glMatrixMode(GL_MODELVIEW);
 
   glutMainLoop();
@@ -210,7 +211,9 @@ void GRAPH_RedrawSimple(const LB_Lattice_p lattice, const EXTOBJ_obj_set_p obj_s
   glEnd();
   
   avgv /= nodes_cnt;
+#if defined(DEBUG)
   printf("min %10.4f, max %10.4f, avg %10.4f\n", minv, maxv, avgv);
+#endif
   new_max = maxv;
 
   graph_RedrawObjects(obj_set);
@@ -344,7 +347,9 @@ void GRAPH_RedrawSolid(const LB_Lattice_p lattice, const EXTOBJ_obj_set_p obj_se
   }
   glEnd();
 
+#if defined(DEBUG)
   printf("min %10.4f, max %10.4f, avg %10.4f\n", minv, maxv, avgv);
+#endif
   new_max = maxv;
 
   graph_RedrawObjects(obj_set);
@@ -378,20 +383,29 @@ void GRAPH_FinishRender(void)
  */
 void GRAPH_DrawButton(lb_float x, lb_float y, lb_float width, lb_float height, char *text)
 {
-  glColor3f(0.8f, 0.8f, 0.8f);
+  glColor3f(0.9f, 0.9f, 0.9f);
   glBegin(GL_QUADS);
-  
-  glVertex2f(x,         y);
-  glVertex2f(x + width, y);
-  glVertex2f(x,         y + height);
-  glVertex2f(x + width, y + height);
-  
-  glColor3f(0.0f, 0.0f, 0.0f);
-  glRasterPos2f(x, y);
-
-  glutBitmapLength(GLUT_BITMAP_TIMES_ROMAN_24, (unsigned char*)text);
-  
+  {
+    glVertex2f(x,         y);
+    glVertex2f(x + width, y);
+    glVertex2f(x + width, y + height);
+    glVertex2f(x,         y + height);
+  }
   glEnd();
+
+  
+  glPushMatrix();
+  {
+    glColor3f(0.1f, 0.1f, 0.1f);
+    glTranslatef(x + 0.2, y + 0.2, 0);
+    glScalef(0.02, 0.02, 0.02);
+
+    for (char *c = text; *c != '\0'; ++c)
+    {
+      glutStrokeCharacter(GLUT_STROKE_ROMAN, *c);
+    }
+  }
+  glPopMatrix();
 }
 
 /*
@@ -399,21 +413,27 @@ void GRAPH_DrawButton(lb_float x, lb_float y, lb_float width, lb_float height, c
  */
 void GRAPH_DrawLabel(lb_float x, lb_float y, lb_float width, lb_float height, char *text)
 {
-  //glColor3f(0.0f, 0.0f, 0.0f);
-  glColor3f(0.3f, 0.3f, 0.3f);
+  glColor3f(0.1f, 0.1f, 0.1f);
   glBegin(GL_QUADS);
-  
-  glVertex2f(x,         y);
-  glVertex2f(x + width, y);
-  glVertex2f(x + width, y + height);
-  glVertex2f(x,         y + height);
-  
-  
+  {
+    glVertex2f(x,         y);
+    glVertex2f(x + width, y);
+    glVertex2f(x + width, y + height);
+    glVertex2f(x,         y + height);
+  }
   glEnd();
-  glColor3f(1.0f, 1.0f, 1.0f);
-  glRasterPos2f(x, y);
 
-  glutBitmapLength(GLUT_BITMAP_TIMES_ROMAN_24, (unsigned char*)text);
   
-  
+  glPushMatrix();
+  {
+    glColor3f(1.0f, 1.0f, 1.0f);
+    glTranslatef(x + 0.2, y + 0.2, 0);
+    glScalef(0.02, 0.02, 0.02);
+
+    for (char *c = text; *c != '\0'; ++c)
+    {
+      glutStrokeCharacter(GLUT_STROKE_ROMAN, *c);
+    }
+  }
+  glPopMatrix();
 }
