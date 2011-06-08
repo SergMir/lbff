@@ -15,6 +15,11 @@ typedef enum
   LB_CALC_MAX
 } LB_CalcType_t;
 
+typedef struct
+{
+  lb_float max_velocity;
+} BASE_statistics_t, *BASE_statistics_p;
+
 void BASE_Stop();
 void BASE_MoveObjects(EXTOBJ_obj_set_p obj_set, lb_float dx, lb_float dy, lb_float dz);
 void BASE_ForcesSwitch(EXTOBJ_obj_set_p obj_set, int on);
@@ -30,5 +35,7 @@ lb_float BASE_GetTimeMs(long time_start, long time_stop);
 LB_Lattice_t* LB_CreateLattice(LB_lattice_type_t lattice_type, LB_node_type_t node_type,
                                uint countX, uint countY, uint countZ,
                                lb_float sizeX, lb_float sizeY, lb_float sizeZ);
+
+void BASE_GetStatistics(const LB_Lattice_p lattice, BASE_statistics_p stat);
 
 #endif /* BASE_H */

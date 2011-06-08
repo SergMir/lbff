@@ -166,3 +166,11 @@ EXTOBJ_obj_set_p BASE_GetCurrentObjectSet(void)
 {
   return current_obj_set;
 }
+
+/*
+ * Get lattice statistics
+ */
+void BASE_GetStatistics(const LB_Lattice_p lattice, BASE_statistics_p stat)
+{
+  stat->max_velocity = lattice->statistics.max_velocity;
+}

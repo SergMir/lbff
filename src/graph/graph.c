@@ -239,6 +239,9 @@ void GRAPH_RedrawSimple(const LB_Lattice_p lattice, const EXTOBJ_obj_set_p obj_s
   printf("min %10.4f, max %10.4f, avg %10.4f\n", minv, maxv, avgv);
 #endif
   new_max = maxv;
+  lattice->statistics.max_velocity = maxv;
+  lattice->statistics.min_velocity = minv;
+  lattice->statistics.min_velocity = avgv;
 
   graph_RedrawObjects(obj_set);
 
@@ -375,6 +378,9 @@ void GRAPH_RedrawSolid(const LB_Lattice_p lattice, const EXTOBJ_obj_set_p obj_se
   printf("min %10.4f, max %10.4f, avg %10.4f\n", minv, maxv, avgv);
 #endif
   new_max = maxv;
+  lattice->statistics.max_velocity = maxv;
+  lattice->statistics.min_velocity = minv;
+  lattice->statistics.min_velocity = avgv;
 
   graph_RedrawObjects(obj_set);
   void *z;

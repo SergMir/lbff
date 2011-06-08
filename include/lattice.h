@@ -63,6 +63,13 @@ typedef struct
   lb_float sizeX;
   lb_float sizeY;
   lb_float sizeZ;
+  
+  struct
+  {
+    lb_float max_velocity;
+    lb_float min_velocity;
+    lb_float avg_velocity;
+  } statistics;
 
 } LB_Lattice_t, *LB_Lattice_p;
 
