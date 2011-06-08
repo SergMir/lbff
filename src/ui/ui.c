@@ -135,19 +135,9 @@ void UI_SpecKeyboardHandler(int key, int x, int y)
 void ui_MouseHandler(int button, int state, int sx, int sy)
 {
   ui_buttons_p cbutton;
-  GLdouble x, y, z;
-  
-  GLint   viewport[4];
-  GLdouble projection[16];
-  GLdouble modelview[16];
-  
-  glGetIntegerv(GL_VIEWPORT, viewport);
-  glGetDoublev(GL_PROJECTION_MATRIX, projection);
-  glGetDoublev(GL_MODELVIEW_MATRIX, modelview);
-  
-  gluUnProject(sx, sy, 0, modelview, projection, viewport, &x, &y, &z);
-  
-  y = 100.0 - y;
+  lb_float x, y;
+
+  GRAPH_UnProject(sx, sy, &x, &y);
 
   for (cbutton = ui_buttons_head; NULL != cbutton; cbutton = cbutton->next)
   {
@@ -230,9 +220,9 @@ UI_label_p UI_CreateLabel(lb_float x, lb_float y, lb_float width, lb_float heigh
 /*
  * 
  */
-void UI_ChangeTextLabel(UI_label_p label)
+void UI_ChangeTextLabel(UI_label_p label, char *text)
 {
-  label = label;
+  strcpy(label->text, text);
 }
 
 /*
@@ -277,8 +267,7 @@ void ui_testButoonHandler(UI_action_t action)
  */
 int UI_Init()
 {
-  UI_CreateLabel(1, 90, 20, 5, "Label sample");
-  UI_CreateButton(30, 90, 20, 5, "Button sample", ui_testButoonHandler);
+  UI_CreateButton(70, 90, 20, 5, "Button sample", ui_testButoonHandler);
   glutKeyboardFunc(UI_KeyboardHandler);
   glutSpecialFunc(UI_SpecKeyboardHandler);
   glutMouseFunc(ui_MouseHandler);
