@@ -21,6 +21,10 @@
 
 #define RERP_VECTORS
 //#define DEBUG
+#define SCREEN_WIDTH 400
+#define SCREEN_HEIGHT 300
+#define WORLD_WIDTH 100
+#define WORLD_HEIGHT 100
 
 /* -------------------------------- Types ---------------------------------- */
 
@@ -33,6 +37,26 @@ void graph_GetColorByVelocity(lb_float velocity, lb_float * r, lb_float * g, lb_
 /* --------------------------- Implementation ------------------------------ */
 
 /*
+ * Convert screen coordinates to world ones
+ */
+void GRAPH_UnProject(int sx, int sy, lb_float *wx, lb_float *wy)
+{
+  GLdouble x, y, z;
+  GLint   viewport[4];
+  GLdouble projection[16];
+  GLdouble modelview[16];
+  
+  glGetIntegerv(GL_VIEWPORT, viewport);
+  glGetDoublev(GL_PROJECTION_MATRIX, projection);
+  glGetDoublev(GL_MODELVIEW_MATRIX, modelview);
+  
+  gluUnProject(sx, sy, 0, modelview, projection, viewport, &x, &y, &z);
+  
+  *wx = x;
+  *wy = WORLD_HEIGHT - y;
+}
+
+/*
  * Window resize callback
  */
 void graph_Reshape(int width, int height)
@@ -40,7 +64,7 @@ void graph_Reshape(int width, int height)
   glViewport(0, 0, width, height);
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  gluOrtho2D(0, 100, 0, 100);
+  gluOrtho2D(0, WORLD_WIDTH, 0, WORLD_HEIGHT);
   glMatrixMode(GL_MODELVIEW);
 }
 
@@ -53,10 +77,10 @@ int GRAPH_Init(f_mainloop_t mainloop)
   glutDisplayFunc(mainloop);
   glClearColor(0, 0, 0, 0);
 
-  glViewport(0, 0, 400, 300);
+  glViewport(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  gluOrtho2D(0, 100, 0, 100);
+  gluOrtho2D(0, WORLD_WIDTH, 0, WORLD_HEIGHT);
   glMatrixMode(GL_MODELVIEW);
 
   glutMainLoop();

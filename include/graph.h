@@ -10,5 +10,7 @@ void GRAPH_DrawButton(lb_float x, lb_float y, lb_float width, lb_float height, c
 void GRAPH_DrawLabel(lb_float x, lb_float y, lb_float width, lb_float height, char *text);
 void GRAPH_FinishRender(void);
 
+void GRAPH_UnProject(int sx, int sy, lb_float *wx, lb_float *wy);
+
 #endif /* GRAPH_H */
 
