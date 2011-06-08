@@ -256,7 +256,7 @@ void GRAPH_RedrawSolid(const LB_Lattice_p lattice, const EXTOBJ_obj_set_p obj_se
       avgv = v_sum;
 
       rel_velocity = min(1.0, v_sum / new_max);
-      rel_velocity = min(1.0, v_sum / 2.0);
+      //rel_velocity = min(1.0, v_sum / 2.0);
       lb_float d = rel_velocity;
 
       lb_float dx = lattice->velocities[xpos * ypos].x > 0 ? d : -d;
@@ -349,8 +349,8 @@ void GRAPH_RedrawSolid(const LB_Lattice_p lattice, const EXTOBJ_obj_set_p obj_se
 
   graph_RedrawObjects(obj_set);
 
-  glFlush();
-  glutSwapBuffers();
+  //glFlush();
+  //glutSwapBuffers();
 
   for (uint i = 0; i < lattice->countY; i++)
     realloc((void *) array[i], sizeof (lb_float) * lattice->countX);
@@ -364,4 +364,49 @@ void GRAPH_Redraw(const LB_Lattice_p lattice, const EXTOBJ_obj_set_p obj_set)
 {
   //GRAPH_RedrawSimple(lattice, obj_set);
   GRAPH_RedrawSolid(lattice, obj_set);
+}
+
+/*
+ * 
+ */
+void GRAPH_DrawButton(lb_float x, lb_float y, lb_float width, lb_float height, char *text)
+{
+  glColor3f(0.8f, 0.8f, 0.8f);
+  glBegin(GL_QUADS);
+  
+  glVertex2f(x,         y);
+  glVertex2f(x + width, y);
+  glVertex2f(x,         y + height);
+  glVertex2f(x + width, y + height);
+  
+  glColor3f(0.0f, 0.0f, 0.0f);
+  glRasterPos2f(x, y);
+
+  glutBitmapLength(GLUT_BITMAP_TIMES_ROMAN_24, (unsigned char*)text);
+  
+  glEnd();
+}
+
+/*
+ * 
+ */
+void GRAPH_DrawLabel(lb_float x, lb_float y, lb_float width, lb_float height, char *text)
+{
+  //glColor3f(0.0f, 0.0f, 0.0f);
+  glColor3f(0.3f, 0.3f, 0.3f);
+  glBegin(GL_QUADS);
+  
+  glVertex2f(x,         y);
+  glVertex2f(x + width, y);
+  glVertex2f(x + width, y + height);
+  glVertex2f(x,         y + height);
+  
+  
+  glEnd();
+  glColor3f(1.0f, 1.0f, 1.0f);
+  glRasterPos2f(x, y);
+
+  glutBitmapLength(GLUT_BITMAP_TIMES_ROMAN_24, (unsigned char*)text);
+  
+  
 }

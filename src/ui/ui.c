@@ -11,8 +11,11 @@
 #include <base.h>
 #include <ui.h>
 #include <extobj.h>
+#include <graph.h>
 
 #include <GL/glut.h>
+#include <stdlib.h>
+#include <string.h>
 
 /* ------------------------------- Defines --------------------------------- */
 
@@ -23,6 +26,22 @@
 /* ------------------------------- Globals --------------------------------- */
 
 /* --------------------------- Implementation ------------------------------ */
+
+typedef struct ui_buttons_s
+{
+  UI_button_t button;
+  struct ui_buttons_s *next;
+} ui_buttons_t, *ui_buttons_p;
+
+ui_buttons_p ui_buttons_head = NULL;
+
+typedef struct ui_labels_s
+{
+  UI_label_t label;
+  struct ui_labels_s *next;
+} ui_labels_t, *ui_labels_p;
+
+ui_labels_p ui_labels_head = NULL;
 
 /*
  * Alphanumerical keys handler
@@ -113,10 +132,107 @@ void UI_SpecKeyboardHandler(int key, int x, int y)
 }
 
 /*
+ * 
+ */
+UI_button_p UI_CreateButton(lb_float x, lb_float y, lb_float width, lb_float height, char *text, UI_buttonAction callback)
+{
+  ui_buttons_p button, button_prev = NULL;
+  
+  for (button = ui_buttons_head; NULL != button; button_prev = button, button = button->next);
+  
+  button = (ui_buttons_p)malloc(sizeof(ui_buttons_t));
+  if (NULL == button_prev)
+  {
+    ui_buttons_head = button;
+  }
+  else
+  {
+    button_prev->next = button;
+  }
+  
+  button->button.x = x;
+  button->button.y = y;
+  button->button.width = width;
+  button->button.height = height;
+  button->button.callback = callback;
+  button->next = NULL;
+  strcpy(button->button.text, text);
+  
+  return &button->button;
+}
+
+/*
+ * 
+ */
+UI_label_p UI_CreateLabel(lb_float x, lb_float y, lb_float width, lb_float height, char *text)
+{
+  ui_labels_p label, label_prev = NULL;
+  
+  for (label = ui_labels_head; NULL != label; label_prev = label, label = label->next);
+  
+  label = (ui_labels_p)malloc(sizeof(ui_labels_t));
+  if (NULL == label_prev)
+  {
+    ui_labels_head = label;
+  }
+  else
+  {
+    label_prev->next = label;
+  }
+  
+  label->label.x = x;
+  label->label.y = y;
+  label->label.width = width;
+  label->label.height = height;
+  label->next = NULL;
+  strcpy(label->label.text, text);
+  
+  return &label->label;
+}
+
+/*
+ * 
+ */
+void UI_ChangeTextLabel(UI_label_p label)
+{
+  label = label;
+}
+
+/*
+ * 
+ */
+void UI_Draw(void)
+{
+  ui_buttons_p button;
+  ui_labels_p label;
+
+  for (button = ui_buttons_head; NULL != button; button = button->next)
+  {
+    GRAPH_DrawButton(
+                     button->button.x,
+                     button->button.y,
+                     button->button.width,
+                     button->button.height,
+                     button->button.text);
+  }
+
+  for (label = ui_labels_head; NULL != label; label = label->next)
+  {
+    GRAPH_DrawLabel(
+                    label->label.x,
+                    label->label.y,
+                    label->label.width,
+                    label->label.height,
+                    label->label.text);
+  }
+}
+
+/*
  * Register keys callbacks
  */
 int UI_Init()
 {
+  UI_CreateLabel(5, 5, 20, 5, "Hi!!");
   glutKeyboardFunc(UI_KeyboardHandler);
   glutSpecialFunc(UI_SpecKeyboardHandler);
   return 0;
