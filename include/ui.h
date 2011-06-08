@@ -31,8 +31,8 @@ typedef struct
 } UI_label_t, *UI_label_p;
 
 int UI_Init(void);
-UI_button_p UI_CreateButton(lb_float x, lb_float y, lb_float width, lb_float height, char *text, UI_buttonAction callback);
-UI_label_p UI_CreateLabel(lb_float x, lb_float y, lb_float width, lb_float height, char *text);
+UI_button_p UI_CreateButton(lb_float x, lb_float y, lb_float width, lb_float height, const char *text, UI_buttonAction callback);
+UI_label_p UI_CreateLabel(lb_float x, lb_float y, lb_float width, lb_float height, const char *text);
 void UI_ChangeTextLabel(UI_label_p label);
 void UI_Draw(void);
 

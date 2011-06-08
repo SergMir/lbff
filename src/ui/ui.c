@@ -134,7 +134,7 @@ void UI_SpecKeyboardHandler(int key, int x, int y)
 /*
  * 
  */
-UI_button_p UI_CreateButton(lb_float x, lb_float y, lb_float width, lb_float height, char *text, UI_buttonAction callback)
+UI_button_p UI_CreateButton(lb_float x, lb_float y, lb_float width, lb_float height, const char *text, UI_buttonAction callback)
 {
   ui_buttons_p button, button_prev = NULL;
   
@@ -164,7 +164,7 @@ UI_button_p UI_CreateButton(lb_float x, lb_float y, lb_float width, lb_float hei
 /*
  * 
  */
-UI_label_p UI_CreateLabel(lb_float x, lb_float y, lb_float width, lb_float height, char *text)
+UI_label_p UI_CreateLabel(lb_float x, lb_float y, lb_float width, lb_float height, const char *text)
 {
   ui_labels_p label, label_prev = NULL;
   
