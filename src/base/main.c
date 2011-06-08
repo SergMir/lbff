@@ -35,6 +35,8 @@ EXTOBJ_obj_set_p obj_set = NULL;
 int objects_cnt = 0;
 int flag_stop = 0;
 
+UI_label_p stat_label = NULL;
+
 /* --------------------------- Implementation ------------------------------ */
 
 
@@ -46,7 +48,8 @@ void mainLoop()
 {
   lb_float dt = 0.1, dt_resolved, dt_rendered;
   long time_start, time_resolved, time_rendered;
-  
+  BASE_statistics_t stat;
+  char dbg_string[256];
   
   time_start = BASE_GetTimeNs();
   
@@ -64,7 +67,10 @@ void mainLoop()
   dt_resolved = BASE_GetTimeMs(time_start, time_resolved);
   dt_rendered = BASE_GetTimeMs(time_resolved, time_rendered);
   dt = dt_resolved + dt_rendered;
-  printf("Calculation: %8.3f ms; Rendering: %8.3f ms; Summary: %8.3f ms\n", dt_resolved, dt_rendered, dt);
+  //printf("Calculation: %8.3f ms; Rendering: %8.3f ms; Summary: %8.3f ms\n", dt_resolved, dt_rendered, dt);
+  BASE_GetStatistics(lattice, &stat);
+  sprintf(dbg_string, "Max velocity: %8.3f", stat.max_velocity);
+  UI_ChangeTextLabel(stat_label, dbg_string);
 
   if (flag_stop)
   {
@@ -91,6 +97,7 @@ int main(int argc, char *argv[])
 #endif
 
   UI_Init();
+  stat_label = UI_CreateLabel(1, 90, 60, 5, "Label sample");
   SOLVER_Init();
   lattice = LB_CreateLattice(LB_LATTICE_2D_SQUARE, LB_NODE_D2_Q9,
                              90, 90, 1,
