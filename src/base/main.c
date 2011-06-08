@@ -54,11 +54,10 @@ void mainLoop()
   
   time_resolved = BASE_GetTimeNs();
   
-  GRAPH_Redraw(lattice, obj_set);
+  GRAPH_RenderWorld(lattice, obj_set);
   UI_Draw();
   
-  glFlush();
-  glutSwapBuffers();
+  GRAPH_FinishRender();
   
   time_rendered = BASE_GetTimeNs();
 

@@ -348,22 +348,29 @@ void GRAPH_RedrawSolid(const LB_Lattice_p lattice, const EXTOBJ_obj_set_p obj_se
   new_max = maxv;
 
   graph_RedrawObjects(obj_set);
-
-  //glFlush();
-  //glutSwapBuffers();
+  void *z;
 
   for (uint i = 0; i < lattice->countY; i++)
-    realloc((void *) array[i], sizeof (lb_float) * lattice->countX);
-  realloc((void *) array, sizeof (lb_float *) * lattice->countY);
+    z = realloc((void *) array[i], sizeof (lb_float) * lattice->countX);
+  z = realloc((void *) array, sizeof (lb_float *) * lattice->countY);
 }
 
 /*
  * Main draw function: draw given lattice and objects
  */
-void GRAPH_Redraw(const LB_Lattice_p lattice, const EXTOBJ_obj_set_p obj_set)
+void GRAPH_RenderWorld(const LB_Lattice_p lattice, const EXTOBJ_obj_set_p obj_set)
 {
   //GRAPH_RedrawSimple(lattice, obj_set);
   GRAPH_RedrawSolid(lattice, obj_set);
+}
+
+/*
+ * 
+ */
+void GRAPH_FinishRender(void)
+{
+  glFlush();
+  glutSwapBuffers();
 }
 
 /*
