@@ -429,67 +429,9 @@ void solver_ResolveLBGeneric(LB_Lattice_p lattice, EXTOBJ_obj_set_p obj_set, LB_
 }
 
 /*
- * Calculate with own simple non-realistic "physics"
- */
-void solver_ResolveNonPhysical(LB_Lattice_p lattice, EXTOBJ_obj_p objects, int objnum, lb_float dt)
-{
-  int i, nodes_cnt = lattice->countX * lattice->countY * lattice->countZ;
-  static EXTOBJ_force_t forces[1000];
-
-  for (i = 0; i < nodes_cnt; ++i)
-  {
-    uint xpos, ypos, zpos;
-    int k = 0, forces_num = objects[0].recalculate_force(&(objects[0]), NULL, 0, forces);
-    solver_vector_p current_vector = solver_GetVectors(lattice->node_type);
-    lb_float x, y, z;
-
-    BASE_GetPosByIdx(lattice, i, &xpos, &ypos, &zpos);
-    
-    x = xpos * lattice->sizeX / lattice->countX;
-    y = ypos * lattice->sizeY / lattice->countY;
-    z = zpos * lattice->sizeZ / lattice->countZ;
-
-
-    for (; k < lattice->node_type; ++k, current_vector += 3)
-    {
-      int j = 0;
-      lb_float delta;
-      
-      for (; j < forces_num; ++j)
-      {
-        lb_float cosfi = solver_CosAngleBetweenVectors((LB3D_p)current_vector, &(forces[j].vector));
-        lb_float dist = 0;
-
-        dist += (forces[j].points.x - x) * (forces[j].points.x - x);
-        dist += (forces[j].points.y - y) * (forces[j].points.y - y);
-        dist += (forces[j].points.z - z) * (forces[j].points.z - z);
-        dist = sqrt(dist) + 0.1;
-
-        if (cosfi > 0)
-        {
-          lb_float delta_force = 0.05 * forces[j].force * cosfi / (lattice->nodes[i].density * dist);
-          lattice->velocities[i * lattice->node_type + k].x += max(delta_force, 0);
-        }
-
-
-        lattice->velocities[i * lattice->node_type + k].x *= 9.95 * dt;
-      }
-
-      delta = 0.01 * lattice->velocities[i * lattice->node_type + k].x;
-
-      lattice->velocities[i * lattice->node_type + k].x -= delta;
-      lattice->velocities[SOLVER_GetNeighborByVector(lattice, i, current_vector) * lattice->node_type + k].x += delta;
-    }
-  }
-  
-  objnum = objnum;
-}
-
-/*
  * Calculate lattice parameters with time delta = dt
  */
 void SOLVER_Resolve(LB_Lattice_p lattice, EXTOBJ_obj_set_p objects, LB_CalcType_t calc_type, lb_float dt)
 {
-  //solver_ResolveNonPhysical(lattice, objects, objnum, dt);
   solver_ResolveLBGeneric(lattice, objects, calc_type, dt);
 }
