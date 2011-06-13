@@ -175,7 +175,62 @@ void graph_RedrawObjects(const EXTOBJ_obj_set_p obj_set)
 }
 
 /*
- * Simple points or vectors visualisation
+ * Fast&smooth visualisation
+ */
+void GRAPH_RedrawSmooth(const LB_Lattice_p lattice, const EXTOBJ_obj_set_p obj_set)
+{
+  lb_float minv = 1000000, maxv = 0, avgv = 0;
+  static lb_float new_max = 0;
+
+  glClearColor(0, 0, 0, 0);
+  glClear(GL_COLOR_BUFFER_BIT);
+  
+  glBegin(GL_QUADS);
+
+  for (uint ypos = 1; ypos < lattice->countY; ++ypos)
+  {
+    for (uint xpos = 1; xpos < lattice->countX; ++xpos)
+    {
+      LB3D_p v_vec;
+      lb_float v_sum, rel_velocity;
+      int r[4] = {
+        BASE_GetIdxByPos(lattice, xpos - 1, ypos - 1, 0),
+        BASE_GetIdxByPos(lattice, xpos, ypos - 1, 0),
+        BASE_GetIdxByPos(lattice, xpos, ypos, 0),
+        BASE_GetIdxByPos(lattice, xpos - 1, ypos, 0)};
+
+      for (int i = 0; i < 4; ++i)
+      {
+        v_vec = &(lattice->velocities[r[i]]);
+        v_sum = sqrt((v_vec->x*v_vec->x) + (v_vec->y*v_vec->y) + (v_vec->z*v_vec->z));
+        rel_velocity = min(1.0, v_sum / new_max);
+        glColor3f(rel_velocity, rel_velocity, rel_velocity);
+        uint xp, yp, zp;
+        lb_float x, y, z;
+        BASE_GetPosByIdx(lattice, r[i], &xp, &yp, &zp);
+        x = xp * lattice->sizeX / lattice->countX;
+        y = yp * lattice->sizeY / lattice->countY;
+        z = zp * lattice->sizeZ / lattice->countZ;
+        glVertex2f(x, y);
+        
+        minv = v_sum < minv ? v_sum : minv;
+        maxv = v_sum > maxv ? v_sum : maxv;
+        avgv += v_sum;
+      }
+    }
+  }
+  
+  glEnd();
+  new_max = maxv;
+  lattice->statistics.max_velocity = maxv;
+  lattice->statistics.min_velocity = minv;
+  lattice->statistics.min_velocity = avgv;
+  
+  graph_RedrawObjects(obj_set);
+}
+
+/*
+ * Printer-friendly visualisation
  */
 void GRAPH_RedrawVectors(const LB_Lattice_p lattice, const EXTOBJ_obj_set_p obj_set)
 {
@@ -391,7 +446,8 @@ void GRAPH_RedrawSolid(const LB_Lattice_p lattice, const EXTOBJ_obj_set_p obj_se
 void GRAPH_RenderWorld(const LB_Lattice_p lattice, const EXTOBJ_obj_set_p obj_set)
 {
   //GRAPH_RedrawVectors(lattice, obj_set);
-  GRAPH_RedrawSolid(lattice, obj_set);
+  //GRAPH_RedrawSolid(lattice, obj_set);
+  GRAPH_RedrawSmooth(lattice, obj_set);
 }
 
 /*
