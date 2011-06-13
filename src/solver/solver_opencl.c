@@ -39,6 +39,16 @@ const char *sourceLB_BHK =
   "                                                                          \n"
   "typedef struct                                                            \n"
   "{                                                                         \n"
+  "  int nodes_cnt;                                                          \n"
+  "  int vectors_cnt;                                                        \n"
+  "  int countX;                                                             \n"
+  "  int countY;                                                             \n"
+  "  int countZ;                                                             \n"
+  "  int obj_num;                                                            \n"
+  "} cl_params_t;                                                            \n"
+  "                                                                          \n"
+  "typedef struct                                                            \n"
+  "{                                                                         \n"
   "  int forces_num;                                                         \n"
   "  EXTOBJ_force_t forces[100];                                             \n"
   "} force_pack_t, *force_pack_p;                                            \n"
@@ -114,24 +124,23 @@ const char *sourceLB_BHK =
   "}                                                                         \n"
   "                                                                          \n"
   "                                                                          \n"
+  "/*----------------------------------------------------------------------*/\n"
+  "                                                                          \n"
+  "                                                                          \n"
   "__kernel void lb_bhk(__global float *us,                                  \n"
   "                     __global float *fs,                                  \n"
   "                     __global float *fsn,                                 \n"
   "                     const __global float *vectors,                       \n"
-  "                     const  int nodes_cnt,                                \n"
-  "                     const  int vectors_cnt,                              \n"
-  "                     const  int countX,                                   \n"
-  "                     const  int countY,                                   \n"
-  "                     const  int countZ,                                   \n"
   "                     const __global force_pack_t *forces,                 \n"
-  "                     const  int obj_num)                                  \n"
+  "                     const __global cl_params_t *params)                  \n"
   "{                                                                         \n"
   "  float tau = 0.55f;                                                      \n"
+  "  int vectors_cnt = params->vectors_cnt;                                  \n"
+  "  int counts[3] = { params->countX, params->countY, params->countZ };     \n"
   "  int i = get_global_id(0);                                               \n"
   "  {                                                                       \n"
   "    float density = 0, fe[3] = {0, 0, 0};                                 \n"
   "    int k, obj;                                                           \n"
-  "    int counts[3] = { countX, countY, countZ };                           \n"
   "    int pos[3];                                                           \n"
   "    float coord[3];                                                       \n"
   "                                                                          \n"
@@ -153,14 +162,14 @@ const char *sourceLB_BHK =
   "      float ux = us[i * 3 + 0];                                           \n"
   "      float uy = us[i * 3 + 1];                                           \n"
   "      float uz = us[i * 3 + 2];                                           \n"
-  "      if (0.577 < sqrt(ux*ux + uy*uy + uz*uz))                            \n"
+  "      if (0.577f < sqrt(ux*ux + uy*uy + uz*uz))                           \n"
   "      {                                                                   \n"
   "        for (k = 0; k < vectors_cnt; ++k)                                 \n"
   "        {                                                                 \n"
   "          us[i * 3 + 0] = 0;                                              \n"
   "          us[i * 3 + 1] = 0;                                              \n"
   "          us[i * 3 + 2] = 0;                                              \n"
-  "          density = 1;                                                    \n"
+  "          density = 1.0f;                                                 \n"
   "          fs[i * vectors_cnt + k] = vectors[k*4 + 3];                     \n"
   "        }                                                                 \n"
   "      }                                                                   \n"
@@ -209,7 +218,7 @@ const char *sourceLB_BHK =
   "      }                                                                   \n"
   "    }                                                                     \n"
   "                                                                          \n"
-  "    for (obj = 0; obj < obj_num; ++obj)                                   \n"
+  "    for (obj = 0; obj < params->obj_num; ++obj)                           \n"
   "    {                                                                     \n"
   "      int j;                                                              \n"
   "                                                                          \n"
@@ -220,7 +229,7 @@ const char *sourceLB_BHK =
   "        float dz = forces[obj].forces[j].points[2] - pos[2];              \n"
   "        float dist = sqrt(dx*dx + dy*dy + dz*dz);                         \n"
   "                                                                          \n"
-  "        float d = 3.0f * 90.0f / countX;                                  \n"
+  "        float d = 3.0f * 90.0f / params->countX;                          \n"
   "                                                                          \n"
   "        if (dist < d)                                                     \n"
   "        {                                                                 \n"
@@ -234,7 +243,7 @@ const char *sourceLB_BHK =
   "              forces[obj].forces[j].vector[0],                            \n"
   "              forces[obj].forces[j].vector[1],                            \n"
   "              forces[obj].forces[j].vector[2] };                          \n"
-  "            float delta = exp(-dist / d);                                 \n"
+  "            float delta = (d - dist) / d;                                 \n"
   "            delta *= vec_mul(nvec,                                        \n"
   "                             nforce);                                     \n"
   "            if (fsn[i * vectors_cnt + k] + delta < 0)                     \n"
@@ -271,93 +280,124 @@ int solver_ResolveOpencl(LB_Lattice_p lattice, force_pack_p forces, int forces_n
   cl_command_queue queue;
   solver_vector_p vector = solver_GetVectors(lattice->node_type);
   cl_int status;
-  cl_mem clForces;
+  cl_mem clForces, clParams;
 
   do
   {
     queue = clCreateCommandQueue(context,
                                  device,
                                  0, &status);
+    solver_breakIfFailed("Create queue", status);
 
     if (NULL == lattice->openCLparams)
     {
       lattice->openCLparams = (LB_OpenCL_p) malloc(sizeof (LB_OpenCL_t));
 
       lattice->openCLparams->u = clCreateBuffer(context,
-                                                CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR,
+                                                CL_MEM_READ_WRITE,
                                                 nodes_cnt * sizeof (LB3D_t),
-                                                lattice->velocities,
-                                                &status);
+                                                NULL, &status);
       solver_breakIfFailed("Create velocities buffer", status);
 
       lattice->openCLparams->fs = clCreateBuffer(context,
-                                                 CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR,
+                                                 CL_MEM_READ_WRITE,
                                                  sizeof (lb_float) * fs_size,
-                                                 lattice->fs,
-                                                 &status);
+                                                 NULL, &status);
       solver_breakIfFailed("Create fs buffer", status);
 
       lattice->openCLparams->fsnew = clCreateBuffer(context,
-                                                    CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR,
+                                                    CL_MEM_READ_WRITE,
                                                     sizeof (lb_float) * fs_size,
-                                                    lattice->fs + fs_size,
-                                                    &status);
+                                                    NULL, &status);
       solver_breakIfFailed("Create fs* buffer", status);
 
       lattice->openCLparams->vectors = clCreateBuffer(context,
-                                                      CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
-                                                      sizeof (lb_float) * lattice->node_type,
-                                                      vector,
-                                                      &status);
+                                                      CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                                                      sizeof (solver_vector_t) * lattice->node_type,
+                                                      vector, &status);
       solver_breakIfFailed("Create vectors buffer", status);
     }
     
+    status = clEnqueueWriteBuffer(queue,
+                                  (cl_mem) lattice->openCLparams->fs,
+                                  CL_TRUE, 0,
+                                  sizeof (lb_float) * fs_size,
+                                  lattice->fs,
+                                  0, NULL, NULL);
+    solver_breakIfFailed("clEnqueueWriteBuffer(fs)", status);
+    
+    status = clEnqueueWriteBuffer(queue,
+                                  (cl_mem) lattice->openCLparams->fsnew,
+                                  CL_TRUE, 0,
+                                  sizeof (lb_float) * fs_size,
+                                  lattice->fs + fs_size,
+                                  0, NULL, NULL);
+    solver_breakIfFailed("clEnqueueWriteBuffer(fsnew)", status);
+    
     clForces = clCreateBuffer(context,
-                              CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
+                              CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
                               sizeof (force_pack_t) * forces_num,
-                              forces,
-                              &status);
-
+                              forces, &status);
+    solver_breakIfFailed("Create forces buffer", status);
+    
+    struct
+    {
+      int nodes_cnt;
+      int vectors_cnt;
+      int countX;
+      int countY;
+      int countZ;
+      int obj_num;
+    } cl_params = {nodes_cnt, lattice->node_type,
+      lattice->countX, lattice->countY, lattice->countZ, forces_num};
+    
+    clParams = clCreateBuffer(context,
+                              CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                              sizeof (cl_params),
+                              &cl_params, &status);
+    solver_breakIfFailed("Create forces buffer", status);
 
     global_work_size = nodes_cnt;
     clSetKernelArg(kernel_lb_bhk, 0, sizeof (cl_mem), (void*) &(lattice->openCLparams->u));
     clSetKernelArg(kernel_lb_bhk, 1, sizeof (cl_mem), (void*) &(lattice->openCLparams->fs));
     clSetKernelArg(kernel_lb_bhk, 2, sizeof (cl_mem), (void*) &(lattice->openCLparams->fsnew));
     clSetKernelArg(kernel_lb_bhk, 3, sizeof (cl_mem), (void*) &(lattice->openCLparams->vectors));
-    clSetKernelArg(kernel_lb_bhk, 4, sizeof (int),    (void*) &(nodes_cnt));
-    clSetKernelArg(kernel_lb_bhk, 5, sizeof (int),    (void*) &(lattice->node_type));
-    clSetKernelArg(kernel_lb_bhk, 6, sizeof (int),    (void*) &(lattice->countX));
-    clSetKernelArg(kernel_lb_bhk, 7, sizeof (int),    (void*) &(lattice->countY));
-    clSetKernelArg(kernel_lb_bhk, 8, sizeof (int),    (void*) &(lattice->countZ));
-    clSetKernelArg(kernel_lb_bhk, 9, sizeof (cl_mem), (void*) &(clForces));
-    clSetKernelArg(kernel_lb_bhk,10, sizeof (int),    (void*) &(forces_num));
+    clSetKernelArg(kernel_lb_bhk, 4, sizeof (cl_mem), (void*) &(clForces));
+    clSetKernelArg(kernel_lb_bhk, 5, sizeof (cl_mem), (void*) &(clParams));
 
-    status = clEnqueueNDRangeKernel(queue,
-                                    kernel_lb_bhk,
-                                    1,
-                                    NULL,
-                                    &global_work_size,
-                                    NULL, 0, NULL,
-                                    NULL);
+    //__OpenCL_lb_bhk_kernel
+    status = clEnqueueNDRangeKernel(queue, kernel_lb_bhk,
+                                    1, NULL, &global_work_size,
+                                    NULL, 0, NULL, NULL);
     solver_breakIfFailed("clEnqueueNDRangeKernel", status);
 
     clFinish(queue);
 
     status = clEnqueueReadBuffer(queue,
                                  (cl_mem) lattice->openCLparams->fsnew,
-                                 CL_TRUE,
-                                 0,
+                                 CL_TRUE, 0,
                                  sizeof (lb_float) * fs_size,
                                  lattice->fs + fs_size,
                                  0, NULL, NULL);
-    solver_breakIfFailed("clEnqueueReadBuffer", status);
-    
+    solver_breakIfFailed("clEnqueueReadBuffer(fsnew)", status);
+
+    status = clEnqueueReadBuffer(queue,
+                         (cl_mem) lattice->openCLparams->u,
+                         CL_TRUE, 0,
+                         nodes_cnt * sizeof (LB3D_t),
+                         lattice->velocities,
+                         0, NULL, NULL);
+    solver_breakIfFailed("clEnqueueReadBuffer(u)", status);
+ 
     status = clReleaseMemObject(clForces);
-    solver_breakIfFailed("clReleaseMemObject", status);
+    solver_breakIfFailed("clReleaseMemObject(clForces)", status);
     
+    status = clReleaseMemObject(clParams);
+    solver_breakIfFailed("clReleaseMemObject(clParams)", status);
+
     clReleaseCommandQueue(queue);
   } while (0);
-  
+
   return (CL_SUCCESS == status) ? 0 : -1;
 }
 
@@ -400,6 +440,7 @@ int solver_initOpencl(void)
 #if defined(SOLVER_OPENCL_DEBUG_BUILD)
                             "-g -O0",
 #else
+                            //"-Werror",
                             NULL,
 #endif
                             NULL, NULL);

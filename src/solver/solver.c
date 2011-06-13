@@ -407,7 +407,7 @@ void solver_ResolveLBGeneric(LB_Lattice_p lattice, EXTOBJ_obj_set_p obj_set, LB_
           {
             for (k = 0; k < lattice->node_type; ++k)
             {
-              lb_float delta = exp(-dist / d) * solver_scalarVectorMultiply((LB3D_p) (vector + k), &(forces[obj].forces[j].vector));
+              lb_float delta = ((d - dist) / d) * solver_scalarVectorMultiply((LB3D_p) (vector + k), &(forces[obj].forces[j].vector));
               if (fsn[i * lattice->node_type + k] + delta < 0)
               {
                 fsn[i * lattice->node_type + k] = 0;
