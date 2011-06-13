@@ -5,3 +5,4 @@ glob:nbproject/
 glob:lbff.exe.stackdump
 glob:*.tmp
 glob:*.tmp.dll
+glob:*.tmp.cl

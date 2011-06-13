@@ -22,4 +22,5 @@ clean:
 	$(ECHO) rm -f lbff
 	$(ECHO) rm -f *.tmp
 	$(ECHO) rm -f *.tmp.dll
+	$(ECHO) rm -f *.tmp.cl
 
