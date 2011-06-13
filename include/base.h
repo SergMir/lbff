@@ -24,6 +24,7 @@ void BASE_Stop();
 void BASE_MoveObjects(EXTOBJ_obj_set_p obj_set, lb_float dx, lb_float dy, lb_float dz);
 void BASE_ForcesSwitch(EXTOBJ_obj_set_p obj_set, int on);
 void BASE_GetPosByIdx(const LB_Lattice_p lattice, int index, uint *x, uint *y, uint *z);
+int BASE_GetIdxByPos(const LB_Lattice_p lattice, uint x, uint y, uint z);
 long BASE_GetTimeNs(void);
 void BASE_SetCalcType(LB_CalcType_t type);
 LB_CalcType_t BASE_GetCalcType(void);

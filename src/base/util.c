@@ -64,6 +64,14 @@ void BASE_GetPosByIdx(const LB_Lattice_p lattice, int index, uint *x, uint *y, u
 }
 
 /*
+ * Get index of node by it's xyz indexes
+ */
+int BASE_GetIdxByPos(const LB_Lattice_p lattice, uint x, uint y, uint z)
+{
+  return lattice->countX * lattice->countY * z + lattice->countX * y + x;
+}
+
+/*
  * Move objects on xyz deltas
  */
 void BASE_MoveObjects(EXTOBJ_obj_set_p obj_set, lb_float dx, lb_float dy, lb_float dz)
