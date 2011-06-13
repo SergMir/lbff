@@ -177,13 +177,14 @@ void graph_RedrawObjects(const EXTOBJ_obj_set_p obj_set)
 /*
  * Simple points or vectors visualisation
  */
-void GRAPH_RedrawSimple(const LB_Lattice_p lattice, const EXTOBJ_obj_set_p obj_set)
+void GRAPH_RedrawVectors(const LB_Lattice_p lattice, const EXTOBJ_obj_set_p obj_set)
 {
   uint i, nodes_cnt = lattice->countX * lattice->countY * lattice->countZ;
   LB3D_p ch_vector = lattice->velocities;
   lb_float minv = 1000000, maxv = 0, avgv = 0;
   static lb_float new_max = 0;
 
+  glClearColor(1.0, 1.0, 1.0, 0);
   glClear(GL_COLOR_BUFFER_BIT);
 
   glColor3f(0.0f, 0.0f, 1.0f);
@@ -201,7 +202,6 @@ void GRAPH_RedrawSimple(const LB_Lattice_p lattice, const EXTOBJ_obj_set_p obj_s
     lb_float x, y, z;
     lb_float rel_velocity, v_sum = 0;
     uint xpos, ypos, zpos;
-    lb_float red, blue;
 
     BASE_GetPosByIdx(lattice, i, &xpos, &ypos, &zpos);
     
@@ -219,16 +219,13 @@ void GRAPH_RedrawSimple(const LB_Lattice_p lattice, const EXTOBJ_obj_set_p obj_s
     maxv = v_sum > maxv ? v_sum : maxv;
     avgv += v_sum;
     rel_velocity = min(1.0, v_sum / new_max);
-    //rel_velocity = min(1.0, v_sum / 2.0);
-    red = rel_velocity;
-    blue = 1.0 - red;
-    glColor3f(red, 0.0f, blue);
+    glColor3f(rel_velocity, rel_velocity, rel_velocity);
     glVertex2f(x, y);
   #if defined(RERP_VECTORS)
     lb_float dx = lattice->velocities[i].x / new_max;
-    dx *= lattice->sizeX / lattice->countX;
+    dx *= 2.0 * lattice->sizeX / lattice->countX;
     lb_float dy = lattice->velocities[i].y / new_max;
-    dy *= lattice->sizeY / lattice->countY;
+    dy *= 2.0 * lattice->sizeY / lattice->countY;
     glVertex2f(x + dx, y + dy);
   #endif
   }
@@ -244,9 +241,6 @@ void GRAPH_RedrawSimple(const LB_Lattice_p lattice, const EXTOBJ_obj_set_p obj_s
   lattice->statistics.min_velocity = avgv;
 
   graph_RedrawObjects(obj_set);
-
-  glFlush();
-  glutSwapBuffers(); 
 }
 
 /*
@@ -258,6 +252,7 @@ void GRAPH_RedrawSolid(const LB_Lattice_p lattice, const EXTOBJ_obj_set_p obj_se
   lb_float minv = 1000000, maxv = 0, avgv = 0;
   static lb_float new_max = 0;
 
+  glClearColor(0, 0, 0, 0);
   glClear(GL_COLOR_BUFFER_BIT);
 
   glColor3f(0.0f, 0.0f, 1.0f);
@@ -395,7 +390,7 @@ void GRAPH_RedrawSolid(const LB_Lattice_p lattice, const EXTOBJ_obj_set_p obj_se
  */
 void GRAPH_RenderWorld(const LB_Lattice_p lattice, const EXTOBJ_obj_set_p obj_set)
 {
-  //GRAPH_RedrawSimple(lattice, obj_set);
+  //GRAPH_RedrawVectors(lattice, obj_set);
   GRAPH_RedrawSolid(lattice, obj_set);
 }
 
