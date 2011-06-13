@@ -45,6 +45,8 @@ typedef struct LB_OpenCL_s
   void *fs;
   void *fsnew;
   void *vectors;
+  void *forces;
+  void *params;
 } LB_OpenCL_t, *LB_OpenCL_p;
 
 typedef struct

@@ -22,6 +22,14 @@
 #undef SOLVER_OPENCL_DEBUG_BUILD
 
 /* -------------------------------- Types ---------------------------------- */
+typedef struct
+{
+  int vectors_cnt;
+  int countX;
+  int countY;
+  int countZ;
+  int obj_num;
+} solver_clParams_t, *solver_clParams_p;
 
 /* --------------------------- Local Routines ------------------------------ */
 
@@ -39,7 +47,6 @@ const char *sourceLB_BHK =
   "                                                                          \n"
   "typedef struct                                                            \n"
   "{                                                                         \n"
-  "  int nodes_cnt;                                                          \n"
   "  int vectors_cnt;                                                        \n"
   "  int countX;                                                             \n"
   "  int countY;                                                             \n"
@@ -280,10 +287,13 @@ int solver_ResolveOpencl(LB_Lattice_p lattice, force_pack_p forces, int forces_n
   cl_command_queue queue;
   solver_vector_p vector = solver_GetVectors(lattice->node_type);
   cl_int status;
-  cl_mem clForces, clParams;
+  long time_start, time_beforeCalc, time_afterCalc, time_stop;
+  solver_clParams_t cl_params = {lattice->node_type,
+      lattice->countX, lattice->countY, lattice->countZ, forces_num};
 
   do
   {
+    time_start = BASE_GetTimeNs();
     queue = clCreateCommandQueue(context,
                                  device,
                                  0, &status);
@@ -316,11 +326,23 @@ int solver_ResolveOpencl(LB_Lattice_p lattice, force_pack_p forces, int forces_n
                                                       sizeof (solver_vector_t) * lattice->node_type,
                                                       vector, &status);
       solver_breakIfFailed("Create vectors buffer", status);
+
+      lattice->openCLparams->forces = clCreateBuffer(context,
+                                                     CL_MEM_READ_ONLY,
+                                                     sizeof (force_pack_t) * forces_num,
+                                                     NULL, &status);
+      solver_breakIfFailed("Create forces buffer", status);
+
+      lattice->openCLparams->params = clCreateBuffer(context,
+                                                     CL_MEM_READ_ONLY,
+                                                     sizeof (cl_params),
+                                                     NULL, &status);
+      solver_breakIfFailed("Create forces buffer", status);
     }
     
     status = clEnqueueWriteBuffer(queue,
                                   (cl_mem) lattice->openCLparams->fs,
-                                  CL_TRUE, 0,
+                                  CL_FALSE, 0,
                                   sizeof (lb_float) * fs_size,
                                   lattice->fs,
                                   0, NULL, NULL);
@@ -328,43 +350,37 @@ int solver_ResolveOpencl(LB_Lattice_p lattice, force_pack_p forces, int forces_n
     
     status = clEnqueueWriteBuffer(queue,
                                   (cl_mem) lattice->openCLparams->fsnew,
-                                  CL_TRUE, 0,
+                                  CL_FALSE, 0,
                                   sizeof (lb_float) * fs_size,
                                   lattice->fs + fs_size,
                                   0, NULL, NULL);
     solver_breakIfFailed("clEnqueueWriteBuffer(fsnew)", status);
     
-    clForces = clCreateBuffer(context,
-                              CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-                              sizeof (force_pack_t) * forces_num,
-                              forces, &status);
-    solver_breakIfFailed("Create forces buffer", status);
+    status = clEnqueueWriteBuffer(queue,
+                                  (cl_mem) lattice->openCLparams->forces,
+                                  CL_FALSE, 0,
+                                  sizeof (force_pack_t) * forces_num,
+                                  forces,
+                                  0, NULL, NULL);
+    solver_breakIfFailed("clEnqueueWriteBuffer(forces)", status);
     
-    struct
-    {
-      int nodes_cnt;
-      int vectors_cnt;
-      int countX;
-      int countY;
-      int countZ;
-      int obj_num;
-    } cl_params = {nodes_cnt, lattice->node_type,
-      lattice->countX, lattice->countY, lattice->countZ, forces_num};
-    
-    clParams = clCreateBuffer(context,
-                              CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-                              sizeof (cl_params),
-                              &cl_params, &status);
-    solver_breakIfFailed("Create forces buffer", status);
+    status = clEnqueueWriteBuffer(queue,
+                                  (cl_mem) lattice->openCLparams->params,
+                                  CL_FALSE, 0,
+                                  sizeof (cl_params),
+                                  &cl_params,
+                                  0, NULL, NULL);
+    solver_breakIfFailed("clEnqueueWriteBuffer(params)", status);
 
     global_work_size = nodes_cnt;
     clSetKernelArg(kernel_lb_bhk, 0, sizeof (cl_mem), (void*) &(lattice->openCLparams->u));
     clSetKernelArg(kernel_lb_bhk, 1, sizeof (cl_mem), (void*) &(lattice->openCLparams->fs));
     clSetKernelArg(kernel_lb_bhk, 2, sizeof (cl_mem), (void*) &(lattice->openCLparams->fsnew));
     clSetKernelArg(kernel_lb_bhk, 3, sizeof (cl_mem), (void*) &(lattice->openCLparams->vectors));
-    clSetKernelArg(kernel_lb_bhk, 4, sizeof (cl_mem), (void*) &(clForces));
-    clSetKernelArg(kernel_lb_bhk, 5, sizeof (cl_mem), (void*) &(clParams));
+    clSetKernelArg(kernel_lb_bhk, 4, sizeof (cl_mem), (void*) &(lattice->openCLparams->forces));
+    clSetKernelArg(kernel_lb_bhk, 5, sizeof (cl_mem), (void*) &(lattice->openCLparams->params));
 
+    time_beforeCalc = BASE_GetTimeNs();
     //__OpenCL_lb_bhk_kernel
     status = clEnqueueNDRangeKernel(queue, kernel_lb_bhk,
                                     1, NULL, &global_work_size,
@@ -372,6 +388,7 @@ int solver_ResolveOpencl(LB_Lattice_p lattice, force_pack_p forces, int forces_n
     solver_breakIfFailed("clEnqueueNDRangeKernel", status);
 
     clFinish(queue);
+    time_afterCalc = BASE_GetTimeNs();
 
     status = clEnqueueReadBuffer(queue,
                                  (cl_mem) lattice->openCLparams->fsnew,
@@ -388,14 +405,13 @@ int solver_ResolveOpencl(LB_Lattice_p lattice, force_pack_p forces, int forces_n
                          lattice->velocities,
                          0, NULL, NULL);
     solver_breakIfFailed("clEnqueueReadBuffer(u)", status);
- 
-    status = clReleaseMemObject(clForces);
-    solver_breakIfFailed("clReleaseMemObject(clForces)", status);
-    
-    status = clReleaseMemObject(clParams);
-    solver_breakIfFailed("clReleaseMemObject(clParams)", status);
 
     clReleaseCommandQueue(queue);
+    time_stop = BASE_GetTimeNs();
+    printf("Solver: pre_calc %8.3f ms; calc %8.3f ms; post_calc %8.3f ms\n",
+           BASE_GetTimeMs(time_start, time_beforeCalc),
+           BASE_GetTimeMs(time_beforeCalc, time_afterCalc),
+           BASE_GetTimeMs(time_afterCalc, time_stop));
   } while (0);
 
   return (CL_SUCCESS == status) ? 0 : -1;
