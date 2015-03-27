@@ -1,5 +1,0 @@
-VERBOSE_COMPILE     := y
-
-OPENCL_PATH := /home/S.Miroshnychenko/Soft/ati-stream-sdk-v2.3-lnx32/
-OPENCL_PATH := "/cygdrive/d/SoftWare/ATI Stream/"
-X32_64 := 32

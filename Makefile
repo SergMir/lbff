@@ -1,26 +1,43 @@
-include user.mk
-include common.mk
+BUILDDIR = build
 
-ROOT = ./
+CFLAGS   = -Iinclude -Wall -Wextra -pedantic --std=gnu99 -O2 -g
+LDFLAGS  = -Wl,--no-as-needed -lm -lGL -lglut -lGLU -fopenmp -L$(BUILDDIR) -llbff
 
-SOURCES_PATH = src
-SRC_SUBDIRS  = base solver graph extobj ui
+SOURCES  = $(shell ls src/*.c)
 
-all: .obj subdirs
-	$(ECHO) $(CC) -o lbff $(patsubst %, $(OBJECTS_PATH)/%,$(shell ls $(OBJECTS_PATH))) $(CMAKEFLAGS) $(CLIBSPATHS) $(CMAKELIBS)
+CL_SRC  += $(shell ls src/*.cl)
 
-.obj:
-	mkdir .obj
+OBJECTS  = $(patsubst %.c, $(BUILDDIR)/%.o, $(notdir $(SOURCES)))
+OBJECTS += $(patsubst %.cl, $(BUILDDIR)/%.o, $(notdir $(CL_SRC)))
 
-subdirs: $(SRC_SUBDIRS)
 
-$(SRC_SUBDIRS):
-	$(MAKE) -C $(ROOT)/$(SOURCES_PATH)/$@
+UNAME :=  $(shell uname -o)
+
+ifeq ($(UNAME), GNU/Linux)
+  LDFLAGS += -lGL -lGLU -lglut -lOpenCL
+else ifeq ($(UNAME), Cygwin)
+  CFLAGS  += -D_WIN32
+  LDFLAGS += -lopengl32 -lglu32 -lglut32 -lOpenCL
+else
+  $(error "Unknown OS: $(UNAME)")
+endif
+
+$(BUILDDIR)/lbff: all
+	$(CC) main.c $(CFLAGS) $(LDFLAGS) -o $@
+
+all: $(BUILDDIR) $(BUILDDIR)/liblbff.a
+
+$(BUILDDIR)/liblbff.a: $(OBJECTS)
+	$(AR) rcs $(BUILDDIR)/liblbff.a $(OBJECTS)
+
+$(BUILDDIR)/%.o: src/%.c
+	$(CC) $(CFLAGS) -c $^ -o $@
+
+$(BUILDDIR)/%.o: src/%.cl
+	objcopy --input binary --output elf64-x86-64 --binary-architecture i386 $^ $@
+
+$(BUILDDIR):
+	mkdir -p $@
 
 clean:
-	$(ECHO) rm -rf $(OBJECTS_PATH)
-	$(ECHO) rm -f lbff
-	$(ECHO) rm -f *.tmp
-	$(ECHO) rm -f *.tmp.dll
-	$(ECHO) rm -f *.tmp.cl
-
+	rm -rf $(BUILDDIR)
