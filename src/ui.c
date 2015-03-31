@@ -12,6 +12,7 @@
 #include <ui.h>
 #include <extobj.h>
 #include <graph.h>
+#include <utils.h>
 
 #include <GL/glut.h>
 #include <stdlib.h>

@@ -52,9 +52,9 @@ typedef struct {
 	LB_node_type_t node_type;
 	LB_OpenCL_p openCLparams;
 
-	uint countX;
-	uint countY;
-	uint countZ;
+	int countX;
+	int countY;
+	int countZ;
 
 	lb_float sizeX;
 	lb_float sizeY;

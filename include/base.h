@@ -20,10 +20,9 @@ void BASE_Stop();
 void BASE_MoveObjects(EXTOBJ_obj_set_p obj_set, lb_float dx, lb_float dy,
 		      lb_float dz);
 void BASE_ForcesSwitch(EXTOBJ_obj_set_p obj_set, int on);
-void BASE_GetPosByIdx(const LB_Lattice_p lattice, int index, uint * x, uint * y,
-		      uint * z);
-int BASE_GetIdxByPos(const LB_Lattice_p lattice, uint x, uint y, uint z);
-long BASE_GetTimeNs(void);
+void BASE_GetPosByIdx(const LB_Lattice_p lattice, int index, int * x, int * y, int * z);
+int BASE_GetIdxByPos(const LB_Lattice_p lattice, int x, int y, int z);
+
 void BASE_SetCalcType(LB_CalcType_t type);
 LB_CalcType_t BASE_GetCalcType(void);
 
@@ -32,8 +31,8 @@ EXTOBJ_obj_set_p BASE_GetCurrentObjectSet(void);
 
 lb_float BASE_GetTimeMs(long time_start, long time_stop);
 LB_Lattice_t *LB_CreateLattice(LB_lattice_type_t lattice_type,
-			       LB_node_type_t node_type, uint countX,
-			       uint countY, uint countZ, lb_float sizeX,
+			       LB_node_type_t node_type, int countX,
+			       int countY, int countZ, lb_float sizeX,
 			       lb_float sizeY, lb_float sizeZ);
 
 void BASE_GetStatistics(const LB_Lattice_p lattice, BASE_statistics_p stat);

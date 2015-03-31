@@ -13,21 +13,15 @@
 #include <solver.h>
 #include <graph.h>
 #include <ui.h>
+#include <utils.h>
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <GL/glut.h>
 #include <unistd.h>
 
-/* ------------------------------- Defines --------------------------------- */
-
 #define LB_FULLSCREEN
 #undef LB_FULLSCREEN
-/* -------------------------------- Types ---------------------------------- */
-
-/* --------------------------- Local Routines ------------------------------ */
-
-/* ------------------------------- Globals --------------------------------- */
 
 LB_Lattice_t *lattice = NULL;
 EXTOBJ_obj_set_p obj_set = NULL;

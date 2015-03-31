@@ -18,8 +18,6 @@
 #include <math.h>
 #include <stdlib.h>
 
-/* ------------------------------- Defines --------------------------------- */
-
 #define RERP_VECTORS
 //#define DEBUG
 #define SCREEN_WIDTH 400
@@ -27,16 +25,8 @@
 #define WORLD_WIDTH 100
 #define WORLD_HEIGHT 100
 
-/* -------------------------------- Types ---------------------------------- */
-
-/* --------------------------- Local Routines ------------------------------ */
-
 void graph_GetColorByVelocity(lb_float velocity, lb_float * r, lb_float * g,
 			      lb_float * b);
-
-/* ------------------------------- Globals --------------------------------- */
-
-/* --------------------------- Implementation ------------------------------ */
 
 /*
  * Convert screen coordinates to world ones
@@ -136,7 +126,7 @@ void graph_GetColorByVelocity(lb_float velocity, lb_float * r, lb_float * g,
  */
 void graph_RedrawObjects(const EXTOBJ_obj_set_p obj_set)
 {
-	uint i;
+	int i;
 
 	glColor3f(0, 1.0f, 0);
 
@@ -175,8 +165,8 @@ void GRAPH_RedrawSmooth(const LB_Lattice_p lattice,
 
 	glBegin(GL_QUADS);
 
-	for (uint ypos = 1; ypos < lattice->countY; ++ypos) {
-		for (uint xpos = 1; xpos < lattice->countX; ++xpos) {
+	for (int ypos = 1; ypos < lattice->countY; ++ypos) {
+		for (int xpos = 1; xpos < lattice->countX; ++xpos) {
 			LB3D_p v_vec;
 			lb_float v_sum, rel_velocity;
 			int r[4] = {
@@ -196,7 +186,7 @@ void GRAPH_RedrawSmooth(const LB_Lattice_p lattice,
 				rel_velocity = min(1.0, v_sum / new_max);
 				glColor3f(rel_velocity, rel_velocity,
 					  rel_velocity);
-				uint xp, yp, zp;
+				int xp, yp, zp;
 				//lb_float x, y, z;
 				lb_float x, y;
 				BASE_GetPosByIdx(lattice, r[i], &xp, &yp, &zp);
@@ -227,7 +217,7 @@ void GRAPH_RedrawSmooth(const LB_Lattice_p lattice,
 void GRAPH_RedrawVectors(const LB_Lattice_p lattice,
 			 const EXTOBJ_obj_set_p obj_set)
 {
-	uint i, nodes_cnt = lattice->countX * lattice->countY * lattice->countZ;
+	int i, nodes_cnt = lattice->countX * lattice->countY * lattice->countZ;
 	LB3D_p ch_vector = lattice->velocities;
 	lb_float minv = 1000000, maxv = 0, avgv = 0;
 	static lb_float new_max = 0;
@@ -248,7 +238,7 @@ void GRAPH_RedrawVectors(const LB_Lattice_p lattice,
 	for (i = 0; i < nodes_cnt; ++i) {
 		lb_float x, y;
 		lb_float rel_velocity, v_sum = 0;
-		uint xpos, ypos, zpos;
+		int xpos, ypos, zpos;
 
 		BASE_GetPosByIdx(lattice, i, &xpos, &ypos, &zpos);
 
@@ -309,12 +299,12 @@ void GRAPH_RedrawSolid(const LB_Lattice_p lattice,
 
 	lb_float **array =
 	    (lb_float **) malloc(sizeof(lb_float *) * lattice->countY);
-	for (uint i = 0; i < lattice->countY; i++)
+	for (int i = 0; i < lattice->countY; i++)
 		array[i] =
 		    (lb_float *) malloc(sizeof(lb_float) * lattice->countX);
 
-	for (uint ypos = 0; ypos < lattice->countY; ypos++) {
-		for (uint xpos = 0; xpos < lattice->countX; xpos++) {
+	for (int ypos = 0; ypos < lattice->countY; ypos++) {
+		for (int xpos = 0; xpos < lattice->countX; xpos++) {
 			lb_float rel_velocity, v_sum = 0;
 
 			v_sum = sqrt
@@ -341,8 +331,8 @@ void GRAPH_RedrawSolid(const LB_Lattice_p lattice,
 		}
 	}
 
-	for (uint ypos = 0; ypos < lattice->countY - 1; ypos++) {
-		for (uint xpos = 0; xpos < lattice->countX - 1; xpos++) {
+	for (int ypos = 0; ypos < lattice->countY - 1; ypos++) {
+		for (int xpos = 0; xpos < lattice->countX - 1; xpos++) {
 			lb_float x, y;
 			x = xpos * lattice->sizeX / lattice->countX;
 			y = ypos * lattice->sizeY / lattice->countY;
@@ -439,7 +429,7 @@ void GRAPH_RedrawSolid(const LB_Lattice_p lattice,
 	graph_RedrawObjects(obj_set);
 	//void *z;
 
-	// for (uint i = 0; i < lattice->countY; i++)
+	// for (int i = 0; i < lattice->countY; i++)
 	//z = realloc((void *) array[i], sizeof (lb_float) * lattice->countX);
 	//z = realloc((void *) array, sizeof (lb_float *) * lattice->countY);
 }

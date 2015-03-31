@@ -1,6 +1,8 @@
 #ifndef EXTOBJ_H
 #define EXTOBJ_H
 
+#include <lattice.h>
+
 typedef struct {
 	LB3D_t points;
 	LB3D_t vector;
@@ -15,7 +17,7 @@ typedef enum {
 /* Take incoming forces and its number, calculate generated forces, return its number */
 typedef int (*EXTOBJ_force_calculate) (void *obj,
 				       const EXTOBJ_force_t * input_forces,
-				       uint in_forces_num,
+				       int in_forces_num,
 				       EXTOBJ_force_t * output_forces);
 
 typedef struct {
@@ -27,8 +29,8 @@ typedef struct {
 } EXTOBJ_obj_t, *EXTOBJ_obj_p;
 
 typedef struct {
-	uint capacity;
-	uint count;
+	int capacity;
+	int count;
 	EXTOBJ_obj_p objects;
 } EXTOBJ_obj_set_t, *EXTOBJ_obj_set_p;
 

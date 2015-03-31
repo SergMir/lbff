@@ -15,21 +15,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-/* ------------------------------- Defines --------------------------------- */
-
-/* -------------------------------- Types ---------------------------------- */
-
-/* --------------------------- Local Routines ------------------------------ */
-
-/* ------------------------------- Globals --------------------------------- */
-
-/* --------------------------- Implementation ------------------------------ */
-
-/*
- * Generation of one force from the geometrical centre of object
- */
 int EXTOBJ_ForceCalcSimple(void *_obj, const EXTOBJ_force_t * input_forces,
-			   uint in_forces_num, EXTOBJ_force_t * output_forces)
+			   int in_forces_num, EXTOBJ_force_t * output_forces)
 {
 	int i;
 	lb_float maxx = 0, maxy = 0, maxz = 0, minx = 1e20, miny = 1e20, minz =

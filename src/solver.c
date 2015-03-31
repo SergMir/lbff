@@ -169,7 +169,7 @@ int SOLVER_GetNeighborByVector(const LB_Lattice_p lattice, int node,
 	int dx = fabs(vector->x) > 0.577 ? 1 : 0;
 	int dy = fabs(vector->y) > 0.577 ? 1 : 0;
 	int dz = fabs(vector->z) > 0.577 ? 1 : 0;
-	uint xpos, ypos, zpos;
+	int xpos, ypos, zpos;
 
 	BASE_GetPosByIdx(lattice, node, &xpos, &ypos, &zpos);
 
@@ -228,7 +228,7 @@ void SOLVER_InitLattice(LB_Lattice_p lattice)
 	solver_vector_p vector = solver_GetVectors(lattice->node_type);
 
 	for (i = 0; i < nodes_num; ++i) {
-		uint j;
+		LB_node_type_t j;
 		lb_float *fs_vector = lattice->fs + i * lattice->node_type;
 		LB3D_p u = lattice->velocities + i;
 
@@ -296,7 +296,7 @@ void solver_ResolveLBGeneric(LB_Lattice_p lattice, EXTOBJ_obj_set_p obj_set,
 	memset(fsn, 0, sizeof(lb_float) * nodes_cnt * lattice->node_type);
 	tau = tau;
 
-	for (uint obj = 0; obj < obj_set->count; ++obj) {
+	for (int obj = 0; obj < obj_set->count; ++obj) {
 		forces[obj].forces_num =
 		    obj_set->objects[obj].
 		    recalculate_force(&(obj_set->objects[obj]), NULL, 0,
@@ -314,8 +314,8 @@ void solver_ResolveLBGeneric(LB_Lattice_p lattice, EXTOBJ_obj_set_p obj_set,
 			lb_float density = 0;
 			LB3D_t fe = { 0, 0, 0 };
 			lb_float *fsi = lattice->fs + i * lattice->node_type;
-			uint k = 0;
-			uint xpos, ypos, zpos;
+			LB_node_type_t k = 0;
+			int xpos, ypos, zpos;
 			lb_float x, y, z;
 
 			BASE_GetPosByIdx(lattice, i, &xpos, &ypos, &zpos);
@@ -360,7 +360,7 @@ void solver_ResolveLBGeneric(LB_Lattice_p lattice, EXTOBJ_obj_set_p obj_set,
 					fsn[next_node * lattice->node_type +
 					    k] += fsi[k] - delta;
 				} else {
-					uint opp_k;
+					LB_node_type_t opp_k;
 					solver_vector_p opp_vector =
 					    solver_GetVectors(lattice->
 							      node_type);
@@ -386,7 +386,7 @@ void solver_ResolveLBGeneric(LB_Lattice_p lattice, EXTOBJ_obj_set_p obj_set,
 				}
 			}
 
-			for (uint obj = 0; obj < obj_set->count; ++obj) {
+			for (int obj = 0; obj < obj_set->count; ++obj) {
 				for (int j = 0; j < forces[obj].forces_num; ++j) {
 					lb_float dx =
 					    forces[obj].forces[j].points.x - x;

@@ -1,6 +1,9 @@
 #ifndef GRAPH_H
 #define GRAPH_H
 
+#include <extobj.h>
+#include <lattice.h>
+
 typedef void (*f_mainloop_t) (void);
 
 int GRAPH_Init(f_mainloop_t mainloop);
