@@ -1,39 +1,26 @@
-#ifndef UI_H
-#define UI_H
+#ifndef _UI_H
+#define _UI_H
 
-#define UI_MAX_TEXT_LEN 50
+#define KEY_ESC		27
+#define KEY_SPACE	32
+#define KEY_ENTER	13
 
-typedef enum {
-	UI_ACT_PRESSED,
-	UI_ACT_RELEASED
-} UI_action_t;
+#define UI_MAX_TEXT_LEN	50
 
-typedef void (*UI_buttonAction) (UI_action_t action);
+struct ui_label;
+struct ui_ctx;
 
-typedef struct {
-	lb_float x;
-	lb_float y;
-	lb_float height;
-	lb_float width;
-	char text[UI_MAX_TEXT_LEN];
-	UI_buttonAction callback;
-} UI_button_t, *UI_button_p;
+typedef void (*ui_keypress_callback)(int key);
 
-typedef struct {
-	lb_float x;
-	lb_float y;
-	lb_float height;
-	lb_float width;
-	char text[UI_MAX_TEXT_LEN];
-} UI_label_t, *UI_label_p;
+struct ui_ctx* ui_init(ui_keypress_callback keypress_callback);
 
-int UI_Init(void);
-UI_button_p UI_CreateButton(lb_float x, lb_float y, lb_float width,
-			    lb_float height, const char *text,
-			    UI_buttonAction callback);
-UI_label_p UI_CreateLabel(lb_float x, lb_float y, lb_float width,
-			  lb_float height, const char *text);
-void UI_ChangeTextLabel(UI_label_p label, char *text);
-void UI_Draw(void);
+struct ui_label* ui_create_label(struct ui_ctx *ctx,
+				 int x, int y,
+				 int width, int height,
+				 const char *text);
 
-#endif				/* UI_H */
+void ui_set_label_text(struct ui_label *label, const char *text);
+
+void ui_render(struct ui_ctx *ctx);
+
+#endif /* _UI_H */

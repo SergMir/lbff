@@ -29,13 +29,65 @@ EXTOBJ_obj_set_p obj_set = NULL;
 int objects_cnt = 0;
 int flag_stop = 0;
 
-UI_label_p stat_label = NULL;
+struct ui_ctx *ui_ctx = NULL;
+struct ui_label *stat_label = NULL;
 
-/* --------------------------- Implementation ------------------------------ */
+static void keypress_callback(int key)
+{
+	static int forces_on = 0;
+	lb_float dx = 0, dy = 0;
 
-/*
- * Fluid recalculation and redraw
- */
+	switch (key) {
+	case KEY_ESC:
+		BASE_Stop();
+		break;
+
+	case KEY_SPACE:
+		forces_on = !forces_on;
+		BASE_ForcesSwitch(BASE_GetCurrentObjectSet(), forces_on);
+		break;
+
+	case KEY_ENTER:
+		if (LB_CALC_OPENCL_CPU == BASE_GetCalcType())
+			BASE_SetCalcType(LB_CALC_CPU);
+		else
+			BASE_SetCalcType(LB_CALC_OPENCL_CPU);
+		break;
+
+	case GLUT_KEY_LEFT:
+		dx = -1;
+		dy = 0;
+		break;
+
+	case GLUT_KEY_RIGHT:
+		dx = 1;
+		dy = 0;
+		break;
+
+	case GLUT_KEY_UP:
+		dx = 0;
+		dy = 1;
+		break;
+
+	case GLUT_KEY_DOWN:
+		dx = 0;
+		dy = -1;
+		break;
+
+	default:
+		break;
+	}
+
+	switch (key) {
+	case GLUT_KEY_LEFT:
+	case GLUT_KEY_RIGHT:
+	case GLUT_KEY_UP:
+	case GLUT_KEY_DOWN:
+		BASE_MoveObjects(BASE_GetCurrentObjectSet(), dx, dy, 0);
+		break;
+	}
+}
+
 void mainLoop()
 {
 	int dt = 0.1, dt_resolved, dt_rendered;
@@ -50,7 +102,7 @@ void mainLoop()
 	time_resolved = util_get_time();
 
 	GRAPH_RenderWorld(lattice, obj_set);
-	UI_Draw();
+	ui_render(ui_ctx);
 
 	GRAPH_FinishRender();
 
@@ -62,7 +114,7 @@ void mainLoop()
 	//printf("Calculation: %8.3f ms; Rendering: %8.3f ms; Summary: %8.3f ms\n", dt_resolved, dt_rendered, dt);
 	BASE_GetStatistics(lattice, &stat);
 	sprintf(dbg_string, "Max velocity: %8.3f", stat.max_velocity);
-	UI_ChangeTextLabel(stat_label, dbg_string);
+	ui_set_label_text(stat_label, dbg_string);
 
 	if (flag_stop) {
 		exit(0);
@@ -71,9 +123,6 @@ void mainLoop()
 	}
 }
 
-/*
- *
- */
 int main(int argc, char *argv[])
 {
 	glutInit(&argc, argv);
@@ -85,8 +134,8 @@ int main(int argc, char *argv[])
 	glutFullScreen();
 #endif
 
-	UI_Init();
-	stat_label = UI_CreateLabel(1, 90, 60, 5, "Label sample");
+	ui_ctx = ui_init(keypress_callback);
+	stat_label = ui_create_label(ui_ctx, 1, 90, 60, 5, "Label sample");
 	SOLVER_Init();
 	lattice = LB_CreateLattice(LB_LATTICE_2D_SQUARE, LB_NODE_D2_Q9,
 				   90, 90, 1, 90, 90, 1);

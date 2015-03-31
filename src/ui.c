@@ -7,10 +7,7 @@
  * under the terms of the GNU General Public License version 3 as published by
  * the Free Software Foundation: http://www.gnu.org/licenses/
  */
-#include <lattice.h>
-#include <base.h>
 #include <ui.h>
-#include <extobj.h>
 #include <graph.h>
 #include <utils.h>
 
@@ -19,232 +16,96 @@
 #include <string.h>
 #include <stdio.h>
 
-typedef struct ui_buttons_s {
-	UI_button_t button;
-	struct ui_buttons_s *next;
-} ui_buttons_t, *ui_buttons_p;
+struct ui_label {
+	int x;
+	int y;
+	int height;
+	int width;
+	char text[UI_MAX_TEXT_LEN];
+};
 
-ui_buttons_p ui_buttons_head = NULL;
+struct ui_labels_list {
+	struct ui_label *label;
+	struct ui_labels_list *next;
+};
 
-typedef struct ui_labels_s {
-	UI_label_t label;
-	struct ui_labels_s *next;
-} ui_labels_t, *ui_labels_p;
+struct ui_callbacks_list {
+	ui_keypress_callback keypress_callback;
+	struct ui_callbacks_list *next;
+};
 
-ui_labels_p ui_labels_head = NULL;
+struct ui_ctx {
+	ui_keypress_callback keypress_callback;
+	struct ui_labels_list *labels;
+};
 
-/*
- * Alphanumerical keys handler
- */
-void UI_KeyboardHandler(unsigned char key, int x, int y)
+static struct ui_callbacks_list *callbacks_list = NULL;
+
+static void ui_keyboard_handler(unsigned char key, int x, int y)
 {
-	static int forces_on = 0;
+	struct ui_callbacks_list *callbacks_node = callbacks_list;
 
-	switch (key) {
-	case 27:		//ESC
-		BASE_Stop();
-		break;
-
-	case 32:		//SPACE
-		forces_on = !forces_on;
-		BASE_ForcesSwitch(BASE_GetCurrentObjectSet(), forces_on);
-		break;
-
-	case 13:		//ENTER
-		{
-			/*
-			   LB_CalcType_t type = BASE_GetCalcType() + 1;
-			   if (LB_CALC_MAX == type)
-			   {
-			   type = 0;
-			   } */
-			if (LB_CALC_OPENCL_CPU == BASE_GetCalcType()) {
-				BASE_SetCalcType(LB_CALC_CPU);
-			} else {
-				BASE_SetCalcType(LB_CALC_OPENCL_CPU);
-			}
-		}
-		break;
-
-	default:
-		break;
+	while (NULL != callbacks_node) {
+		callbacks_node->keypress_callback(key);
+		callbacks_node = callbacks_node->next;
 	}
 
-	/* Anti-Warning */
-	x = x;
-	y = y;
+	UNUSED(x);
+	UNUSED(y);
 }
 
-/*
- * Special keys handler
- */
-void UI_SpecKeyboardHandler(int key, int x, int y)
+static void ui_spec_keyboard_handler(int key, int x, int y)
 {
-	lb_float dx = 0, dy = 0;
-
-	switch (key) {
-	case GLUT_KEY_LEFT:
-		dx = -1;
-		dy = 0;
-		break;
-	case GLUT_KEY_RIGHT:
-		dx = 1;
-		dy = 0;
-		break;
-	case GLUT_KEY_UP:
-		dx = 0;
-		dy = 1;
-		break;
-	case GLUT_KEY_DOWN:
-		dx = 0;
-		dy = -1;
-		break;
-	}
-
-	switch (key) {
-	case GLUT_KEY_LEFT:
-	case GLUT_KEY_RIGHT:
-	case GLUT_KEY_UP:
-	case GLUT_KEY_DOWN:
-		BASE_MoveObjects(BASE_GetCurrentObjectSet(), dx, dy, 0);
-		break;
-	}
-
-	/* Anti-Warning */
-	x = x;
-	y = y;
+	ui_keyboard_handler(key, x, y);
 }
 
-void ui_MouseHandler(int button, int state, int sx, int sy)
+struct ui_label* ui_create_label(struct ui_ctx *ctx,
+				 int x, int y,
+				 int width, int height,
+				 const char *text)
 {
-	ui_buttons_p cbutton;
-	lb_float x, y;
+	struct ui_label *label = malloc(sizeof(*label));
 
-	GRAPH_UnProject(sx, sy, &x, &y);
+	LIST_ADD(ctx->labels, struct ui_labels_list,
+		 label, label);
 
-	for (cbutton = ui_buttons_head; NULL != cbutton;
-	     cbutton = cbutton->next) {
-		UI_button_p button = &cbutton->button;
+	label->x = x;
+	label->y = y;
+	label->width = width;
+	label->height = height;
+	strcpy(label->text, text);
 
-		if (x >= button->x &&
-		    x <= button->x + button->width &&
-		    y >= button->y && y <= button->y + button->height) {
-			break;
-		}
-	}
-
-	if (NULL != cbutton && GLUT_LEFT_BUTTON == button) {
-		cbutton->button.callback(GLUT_DOWN ==
-					 state ? UI_ACT_PRESSED :
-					 UI_ACT_RELEASED);
-	}
+	return label;
 }
 
-/*
- * 
- */
-UI_button_p UI_CreateButton(lb_float x, lb_float y, lb_float width,
-			    lb_float height, const char *text,
-			    UI_buttonAction callback)
-{
-	ui_buttons_p button, button_prev = NULL;
-
-	for (button = ui_buttons_head; NULL != button;
-	     button_prev = button, button = button->next) ;
-
-	button = (ui_buttons_p) malloc(sizeof(ui_buttons_t));
-	if (NULL == button_prev) {
-		ui_buttons_head = button;
-	} else {
-		button_prev->next = button;
-	}
-
-	button->button.x = x;
-	button->button.y = y;
-	button->button.width = width;
-	button->button.height = height;
-	button->button.callback = callback;
-	button->next = NULL;
-	strcpy(button->button.text, text);
-
-	return &button->button;
-}
-
-/*
- * 
- */
-UI_label_p UI_CreateLabel(lb_float x, lb_float y, lb_float width,
-			  lb_float height, const char *text)
-{
-	ui_labels_p label, label_prev = NULL;
-
-	for (label = ui_labels_head; NULL != label;
-	     label_prev = label, label = label->next) ;
-
-	label = (ui_labels_p) malloc(sizeof(ui_labels_t));
-	if (NULL == label_prev) {
-		ui_labels_head = label;
-	} else {
-		label_prev->next = label;
-	}
-
-	label->label.x = x;
-	label->label.y = y;
-	label->label.width = width;
-	label->label.height = height;
-	label->next = NULL;
-	strcpy(label->label.text, text);
-
-	return &label->label;
-}
-
-/*
- * 
- */
-void UI_ChangeTextLabel(UI_label_p label, char *text)
+void ui_set_label_text(struct ui_label *label, const char *text)
 {
 	strcpy(label->text, text);
 }
 
-/*
- * 
- */
-void UI_Draw(void)
+void ui_render(struct ui_ctx *ctx)
 {
-	ui_buttons_p button;
-	ui_labels_p label;
+	struct ui_labels_list *label_node = ctx->labels;
 
-	for (button = ui_buttons_head; NULL != button; button = button->next) {
-		GRAPH_DrawButton(button->button.x,
-				 button->button.y,
-				 button->button.width,
-				 button->button.height, button->button.text);
-	}
-
-	for (label = ui_labels_head; NULL != label; label = label->next) {
-		GRAPH_DrawLabel(label->label.x,
-				label->label.y,
-				label->label.width,
-				label->label.height, label->label.text);
+	for (; NULL != label_node; label_node = label_node->next) {
+		struct ui_label *label = label_node->label;
+		GRAPH_DrawLabel(label->x, label->y,
+				label->width, label->height,
+				label->text);
 	}
 }
 
-/*
- * Test button callback handler
- */
-void ui_testButoonHandler(UI_action_t action)
+struct ui_ctx* ui_init(ui_keypress_callback keypress_callback)
 {
-	printf("Test button, action: %d\n", action);
-}
+	struct ui_ctx *ctx = malloc(sizeof(*ctx));
 
-/*
- * Register keys callbacks
- */
-int UI_Init()
-{
-	UI_CreateButton(70, 90, 20, 5, "Button sample", ui_testButoonHandler);
-	glutKeyboardFunc(UI_KeyboardHandler);
-	glutSpecialFunc(UI_SpecKeyboardHandler);
-	glutMouseFunc(ui_MouseHandler);
-	return 0;
+	if (NULL != keypress_callback) {
+		LIST_ADD(callbacks_list, struct ui_callbacks_list, \
+			 keypress_callback, keypress_callback);
+	}
+
+	glutKeyboardFunc(ui_keyboard_handler);
+	glutSpecialFunc(ui_spec_keyboard_handler);
+
+	return ctx;
 }

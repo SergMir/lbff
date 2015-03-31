@@ -30,6 +30,23 @@
 		goto out;			\
 	}
 
+#define UNUSED(x) 	x = x;
+
+#define LIST_ADD(head, type, field, value)	\
+	if (NULL == head) {			\
+		head = malloc(sizeof(type));	\
+		head->field = value;		\
+		head->next = NULL;		\
+	} else {				\
+		type *node = head;		\
+		while (NULL != node->next)	\
+			node = node->next;	\
+		node->next = malloc(sizeof(type));	\
+		node = node->next;		\
+		node->field = value;		\
+		node->next = NULL;		\
+	}
+
 long util_get_time(void);
 int util_diff_time_us(long time_start, long time_stop);
 
