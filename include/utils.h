@@ -30,4 +30,7 @@
 		goto out;			\
 	}
 
+long util_get_time(void);
+int util_diff_time_us(long time_start, long time_stop);
+
 #endif /* __UTILS_H_ */

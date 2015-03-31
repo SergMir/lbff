@@ -38,26 +38,26 @@ UI_label_p stat_label = NULL;
  */
 void mainLoop()
 {
-	lb_float dt = 0.1, dt_resolved, dt_rendered;
+	int dt = 0.1, dt_resolved, dt_rendered;
 	long time_start, time_resolved, time_rendered;
 	BASE_statistics_t stat;
 	char dbg_string[256];
 
-	time_start = BASE_GetTimeNs();
+	time_start = util_get_time();
 
 	SOLVER_Resolve(lattice, obj_set, BASE_GetCalcType(), dt);
 
-	time_resolved = BASE_GetTimeNs();
+	time_resolved = util_get_time();
 
 	GRAPH_RenderWorld(lattice, obj_set);
 	UI_Draw();
 
 	GRAPH_FinishRender();
 
-	time_rendered = BASE_GetTimeNs();
+	time_rendered = util_get_time();
 
-	dt_resolved = BASE_GetTimeMs(time_start, time_resolved);
-	dt_rendered = BASE_GetTimeMs(time_resolved, time_rendered);
+	dt_resolved = util_diff_time_us(time_start, time_resolved);
+	dt_rendered = util_diff_time_us(time_resolved, time_rendered);
 	dt = dt_resolved + dt_rendered;
 	//printf("Calculation: %8.3f ms; Rendering: %8.3f ms; Summary: %8.3f ms\n", dt_resolved, dt_rendered, dt);
 	BASE_GetStatistics(lattice, &stat);

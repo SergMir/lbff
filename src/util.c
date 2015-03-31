@@ -94,22 +94,16 @@ LB_Lattice_t *LB_CreateLattice(LB_lattice_type_t lattice_type,
 	return lattice;
 }
 
-/*
- * Real-time clock in nanoseconds
- */
-long BASE_GetTimeNs(void)
+long util_get_time(void)
 {
 	struct timespec tp;
 	clock_gettime(CLOCK_REALTIME, &tp);
 	return tp.tv_sec * 1000000000 + tp.tv_nsec;
 }
 
-/*
- * Get difference in milliseconds
- */
-lb_float BASE_GetTimeMs(long time_start, long time_stop)
+int util_diff_time_us(long time_start, long time_stop)
 {
-	return (time_stop - time_start) / 1000000.0;
+	return (time_stop - time_start) / 1000;
 }
 
 void BASE_SetCalcType(LB_CalcType_t type)

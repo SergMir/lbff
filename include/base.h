@@ -29,7 +29,7 @@ LB_CalcType_t BASE_GetCalcType(void);
 void BASE_SetCurrentObjectSet(EXTOBJ_obj_set_p obj_set);
 EXTOBJ_obj_set_p BASE_GetCurrentObjectSet(void);
 
-lb_float BASE_GetTimeMs(long time_start, long time_stop);
+
 LB_Lattice_t *LB_CreateLattice(LB_lattice_type_t lattice_type,
 			       LB_node_type_t node_type, int countX,
 			       int countY, int countZ, lb_float sizeX,

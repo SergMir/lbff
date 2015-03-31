@@ -54,7 +54,7 @@ int solver_ResolveOpencl(LB_Lattice_p lattice, force_pack_p forces,
 		forces_num
 	};
 
-	time_start = BASE_GetTimeNs();
+	time_start = util_get_time();
 	queue = clCreateCommandQueue(context, device, 0, &status);
 	COND_OUT(CL_SUCCESS == status);
 
@@ -134,14 +134,14 @@ int solver_ResolveOpencl(LB_Lattice_p lattice, force_pack_p forces,
 	clSetKernelArg(kernel_lb_bhk, 5, sizeof(cl_mem),
 		       (void *)&(lattice->openCLparams->params));
 
-	time_beforeCalc = BASE_GetTimeNs();
+	time_beforeCalc = util_get_time();
 	status = clEnqueueNDRangeKernel(queue, kernel_lb_bhk,
 					1, NULL, &global_work_size,
 					NULL, 0, NULL, NULL);
 	COND_OUT(CL_SUCCESS == status);
 
 	clFinish(queue);
-	time_afterCalc = BASE_GetTimeNs();
+	time_afterCalc = util_get_time();
 
 	status = clEnqueueReadBuffer(queue, (cl_mem) lattice->openCLparams->fsnew,
 				     CL_TRUE, 0, sizeof(lb_float) * fs_size,
@@ -154,11 +154,11 @@ int solver_ResolveOpencl(LB_Lattice_p lattice, force_pack_p forces,
 	COND_OUT(CL_SUCCESS == status);
 
 	clReleaseCommandQueue(queue);
-	time_stop = BASE_GetTimeNs();
-	printf("Solver: pre_calc %8.3f ms; calc %8.3f ms; post_calc %8.3f ms\n",
-	       BASE_GetTimeMs(time_start, time_beforeCalc),
-	       BASE_GetTimeMs(time_beforeCalc, time_afterCalc),
-	       BASE_GetTimeMs(time_afterCalc, time_stop));
+	time_stop = util_get_time();
+	printf("Solver: pre_calc %d us; calc %d us; post_calc %d us\n",
+	       util_diff_time_us(time_start, time_beforeCalc),
+	       util_diff_time_us(time_beforeCalc, time_afterCalc),
+	       util_diff_time_us(time_afterCalc, time_stop));
 
 out:
 	return (CL_SUCCESS == status) ? 0 : -1;
